@@ -54,6 +54,14 @@
 | `POST /api/admin/orders {orderRef}` | order → `paid`, `paid_at` terisi, plan tenant → pro |
 | `POST /api/account/rotate-key` | key lama invalid, key baru terbit |
 | `POST /api/auth/logout` | cookie terhapus, `/api/account` → 401 |
+| Cookie dimanipulasi / sampah | 401 (HMAC tolak) |
+| `DELETE /api/orders?ref=` sendiri (pending) | 200, status `cancelled` |
+| `DELETE` order milik tenant lain | 404 (RLS) |
+| `DELETE` order sudah `paid` | 404 (hanya `pending` yang bisa dibatalkan) |
+| Webhook `{orderRef,status:settlement}` + HMAC sah | 200, order `paid`, plan naik |
+| Webhook `status:pending` | 200 `{ignored:true}` (plan tak berubah) |
+| Webhook signature salah / `orderRef` tak dikenal | 401 / 400 |
+| Webhook settlement diulang (idempoten) | 200, tidak dobel-efek |
 | RLS `users`/`orders` tanpa tenant ctx (app role) | 0 baris |
 | RLS `orders` tenant lain | 0 baris |
 | `POST /api/webhook/payment` tanpa secret | 503 |
