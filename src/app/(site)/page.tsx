@@ -7,7 +7,9 @@ import { SITE, SITE_URL } from "@/lib/site";
 /* Public marketing landing page — no API key, no internal jargon. */
 
 export const metadata: Metadata = {
-  title: SITE.title,
+  // `absolute` bypasses the "%s · DocuAsk" template — SITE.title already
+  // contains the brand, so the template would duplicate it.
+  title: { absolute: SITE.title },
   description: SITE.description,
   alternates: { canonical: "/" },
   openGraph: {
