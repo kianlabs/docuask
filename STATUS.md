@@ -1,6 +1,28 @@
 # DocuAsk — Status
 
-**v0.4 — akun self-service + order flow + multi-tenant + bge-m3 + Postgres/pgvector + billing. Terverifikasi 2026-10-04.**
+**v0.5 — restrukturisasi UI (landing `/` + workspace `/app`, tema terang) + auth sesi untuk aplikasi web + akun self-service + order flow + multi-tenant + bge-m3 + Postgres/pgvector + billing. Terverifikasi 2026-10-04.**
+
+## UI & sesi (v0.5)
+
+- `/` = landing marketing; `/app` = workspace (login via cookie sesi, bukan
+  paste API key). API key tetap didukung untuk akses programatik.
+- Chat 2 kolom: sidebar dokumen + area chat; sitasi inline bernomor `[page N]`
+  menaut ke kartu sumber (dari lapisan retrieval, bukan model).
+- Tema terang (token `canvas/surface/line/ink/accent`); komponen bersama
+  `src/components/ui.tsx` + `SiteHeader`.
+- `/account` = dasbor kuota + kartu paket Good-Better-Best + riwayat pesanan;
+  `/login` `?next=` dibatasi ke path internal (anti open redirect).
+
+### Verifikasi UI (fresh)
+| Cek | Hasil |
+|---|---|
+| `npx tsc --noEmit` | exit 0 |
+| `CI=1 npx next lint` | No ESLint warnings or errors |
+| `next build` (terisolasi `/tmp`) | exit 0, 19 rute |
+| E2E sesi | signup → `/app` → upload → tanya (jawaban + "Sumber (3)") → order pro → admin lunas |
+| Sitasi inline | 2 anchor `a[href^="#src-"]` menaut ke kartu sumber |
+| Guard `?next=` | `https://…`, `//…`, `/\…`, `javascript:…` → `/app` |
+| `tenants.is_active` | jalur sesi menolak tenant nonaktif |
 
 ## Verifikasi (fresh, app sebagai role non-superuser)
 
@@ -129,7 +151,7 @@
 cd ~/Projects/docuask
 export PATH="$HOME/.local/share/mise/installs/node/22.23.3/bin:$PATH"
 set -a && . ./.env.local && set +a
-npx next dev -p 3005     # http://localhost:3005 | /admin
+npx next dev -p 3005     # http://localhost:3005/app (sign up, upload, ask) | /admin
 ```
 
 Setup DB (sekali): `sql/schema.sql`, `sql/roles.sql`, `sql/billing.sql`,

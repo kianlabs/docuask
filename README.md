@@ -36,7 +36,7 @@ cp .env.example .env.local   # fill DATABASE_URL, CF creds, LLM key
 
 # 4. Run
 npm install
-npx next dev -p 3005
+npx next dev -p 3005     # open http://localhost:3005/app (sign up, upload, ask)
 ```
 
 The app-role password (`DOCUASK_APP_PASSWORD`) must match the one embedded in
@@ -66,8 +66,10 @@ curl -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
 
 ## Multi-tenancy
 
-- Every request carries an API key (`x-api-key` or `Authorization: Bearer`).
-- The key resolves to a tenant (`tenants` table). Keys listed in
+- A request is authenticated by an **API key** (`x-api-key` or
+  `Authorization: Bearer`) or by the **session cookie** set at login. The
+  browser app (`/app`, `/account`) uses the cookie; scripts use a key.
+- Either credential resolves to a tenant (`tenants` table). Keys listed in
   `DOCUASK_DEV_TENANT_KEYS` are auto-provisioned on first use.
 - Every query filters `tenant_id`, **and** Postgres RLS rejects cross-tenant
   rows even if a query forgets. See `sql/schema.sql` and `src/lib/store.ts`
@@ -106,8 +108,17 @@ curl -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
 | `POST` | `/api/admin/orders` | `{orderRef}` → mark paid + upgrade the tenant (requires `x-admin-token`) |
 | `POST` | `/api/webhook/payment` | payment-gateway callback (HMAC-SHA256 `x-payment-signature`; fail-closed) |
 
-All tenant endpoints require an API key. `/api/chat` GET only exposes the LLM
+Tenant endpoints accept **either** an API key **or** a session cookie (the
+browser app uses the cookie). `/api/chat` GET only exposes the LLM
 endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
+
+## Pages
+
+- `/` — landing page (value prop, sample Q&A, pricing).
+- `/app` — the workspace: sign in, upload PDFs, ask questions, get cited
+  answers. Requires a session (redirects to `/login` otherwise).
+- `/account` — usage, plan comparison, orders, and the API key (for scripts).
+- `/login`, `/signup`, `/admin`.
 
 ## Billing
 
