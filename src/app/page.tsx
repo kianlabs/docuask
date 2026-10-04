@@ -34,7 +34,7 @@ interface Usage {
 }
 
 export default function Home() {
-  const [apiKey, setApiKey] = useState("devkey-acme");
+  const [apiKey, setApiKey] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [docs, setDocs] = useState<Doc[]>([]);
   const [status, setStatus] = useState<string>("");
@@ -181,6 +181,7 @@ export default function Home() {
           <input
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
+            placeholder="your-tenant-api-key"
             onBlur={() => {
               loadDiag();
               loadDocs();

@@ -9,21 +9,23 @@ retrieval-augmented generation (RAG).
 - **Postgres + pgvector** — vector search with an HNSW index (cosine)
 - **Cloudflare Workers AI `@cf/baai/bge-m3`** — 1024-dim semantic embeddings
   (falls back to a local 1024-dim hash embedder with no credentials)
-- **Any OpenAI-compatible LLM** — defaults to the local 9router gateway
+- **Any OpenAI-compatible LLM** — point `LLM_BASE_URL` at your gateway
 - **Multi-tenant + Row-Level Security** — isolation enforced in the database
 
 ## Quick start
 
 ```bash
-# 1. Database (pgvector). If you don't have one:
+# 1. Database (pgvector). Replace the password before any real use.
 docker run -d --name docuask-pg \
-  -e POSTGRES_USER=docuask -e POSTGRES_PASSWORD=docuask_dev_pw \
+  -e POSTGRES_USER=docuask -e POSTGRES_PASSWORD=change_me_dev_pw \
   -e POSTGRES_DB=docuask -p 127.0.0.1:5433:5432 \
   pgvector/pgvector:pg18
 
-# 2. Schema + a NON-superuser app role (RLS requires it — see PITFALLS)
+# 2. Schema + a NON-superuser app role (RLS requires it — see PITFALLS).
+#    Pass the app role's password explicitly; do NOT rely on the dev default.
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/schema.sql
-docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/roles.sql
+docker exec -i docuask-pg psql -U docuask -d docuask \
+  -v app_password="$DOCUASK_APP_PASSWORD" -f - < sql/roles.sql
 
 # 3. Config
 cp .env.example .env.local   # fill DATABASE_URL, CF creds, LLM key
@@ -32,6 +34,9 @@ cp .env.example .env.local   # fill DATABASE_URL, CF creds, LLM key
 npm install
 npx next dev -p 3005
 ```
+
+Set `DOCUASK_APP_PASSWORD` to the same value used in `DATABASE_URL`, and use a
+real secret in production — the password in `sql/roles.sql` is a dev default only.
 
 Nodes 22 LTS is required if you use `better-sqlite3`; with Postgres any recent
 LTS works. Pin with `.node-version`.
@@ -79,6 +84,23 @@ endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
   **Questions** use a monthly counter in `usage_counters`.
 - In production the mock self-upgrade is blocked; plan changes come from the
   signed payment webhook (`PAYMENT_WEBHOOK_SECRET`). Unset secret = 503.
+
+## Security
+
+- **Secrets stay in env.** `.env.local` is git-ignored; `.env.example` holds
+  placeholders only. Never commit real credentials.
+- **Admin auth is fail-closed.** With `ADMIN_TOKEN` unset, `/admin` and
+  `/api/admin` are disabled. The token is compared in constant time.
+- **Payment webhook is fail-closed.** With `PAYMENT_WEBHOOK_SECRET` unset,
+  `/api/webhook/payment` returns 503. Requests must carry a valid
+  HMAC-SHA256 signature.
+- **Tenant isolation is in the database** (RLS), not only in application code.
+- The mock self-upgrade in `POST /api/usage` is disabled in production unless
+  `ALLOW_MOCK_UPGRADE=1`.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
 
 ## PITFALLS (verified the hard way — do not repeat)
 

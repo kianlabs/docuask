@@ -26,10 +26,10 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE INDEX IF NOT EXISTS idx_documents_tenant ON documents(tenant_id);
 
 -- ----------------------------------------------------------------- chunks --
--- Embedding dim is fixed at 1024 (Cloudflare bge-m3). If you switch to the
--- hash fallback (256-dim) you must re-create this column/schema accordingly —
--- a dimension mismatch is a hard error, which is the point: silent mixing is
--- worse than a loud failure.
+-- Embedding dim is fixed at 1024 (Cloudflare bge-m3 and the hash fallback are
+-- both 1024-dim). If you switch to an embedder with a different dimension you
+-- must re-create this column/schema accordingly — a dimension mismatch is a
+-- hard error, which is the point: silent mixing is worse than a loud failure.
 CREATE TABLE IF NOT EXISTS chunks (
   id          SERIAL PRIMARY KEY,
   tenant_id   INTEGER NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,

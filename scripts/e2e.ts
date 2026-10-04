@@ -2,17 +2,21 @@
  * End-to-end RAG check without a browser.
  *   npx tsx scripts/e2e.ts <path-to.pdf> "question 1" ["question 2" ...]
  *
- * Env: API_KEY (tenant key, default devkey-acme), BASE (default :3005).
+ * Env: API_KEY (tenant key, required), BASE (default :3005).
  */
 import { readFileSync } from "node:fs";
 
-const API_KEY = process.env.API_KEY || "devkey-acme";
+const API_KEY = process.env.API_KEY || "";
 const BASE = process.env.BASE || "http://127.0.0.1:3005";
 
 async function main() {
   const [pdfPath, ...questions] = process.argv.slice(2);
   if (!pdfPath) {
     console.error("usage: tsx scripts/e2e.ts <pdf> \"q1\" [\"q2\" ...]");
+    process.exit(1);
+  }
+  if (!API_KEY) {
+    console.error("API_KEY env var is required (a tenant API key).");
     process.exit(1);
   }
 

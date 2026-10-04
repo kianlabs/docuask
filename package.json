@@ -2,6 +2,8 @@
   "name": "docuask",
   "version": "0.3.0",
   "private": true,
+  "description": "Multi-tenant RAG: upload PDFs, ask questions, get answers with page citations.",
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

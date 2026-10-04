@@ -3,7 +3,7 @@
  *
  * Provider "cloudflare": Cloudflare Workers AI `@cf/baai/bge-m3` (1024-dim).
  *   Real semantic embeddings. Needs CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN.
- * Provider "hash": deterministic feature-hashing (256-dim), zero credentials.
+ * Provider "hash": deterministic feature-hashing (1024-dim), zero credentials.
  *   Lexical only (weaker paraphrase recall) — used as fallback / offline dev.
  *
  * Selection: EMBED_PROVIDER env, else auto (cloudflare if creds present, else hash).
