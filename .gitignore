@@ -1,0 +1,21 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+
+# Secrets — never commit real credentials. Keep .env.example (template only).
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+!.env.example
+
+# Build / cache artifacts
+*.log
+coverage/
+dist/
+
