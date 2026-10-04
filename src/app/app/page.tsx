@@ -83,6 +83,7 @@ export default function AppPage() {
   const [diag, setDiag] = useState<Diag | null>(null);
   const [showDiag, setShowDiag] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [dragging, setDragging] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* --------------------------- data loaders ------------------------------ */
@@ -128,13 +129,12 @@ export default function AppPage() {
 
   /* ------------------------------ actions -------------------------------- */
 
-  async function upload() {
-    if (!file) return;
+  async function ingestFile(f: File) {
     setBusy(true);
     setStatus("Memproses dokumen…");
     try {
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", f);
       const r = await fetch("/api/ingest", { method: "POST", body: form });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
@@ -146,6 +146,11 @@ export default function AppPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function upload() {
+    if (!file) return;
+    await ingestFile(file);
   }
 
   async function ask(qOverride?: string) {
@@ -228,7 +233,33 @@ export default function AppPage() {
   const hasDocs = docs.length > 0;
 
   return (
-    <div className="mx-auto grid h-[calc(100vh-3.5rem)] max-w-6xl grid-cols-1 gap-0 lg:grid-cols-[320px_1fr]">
+    <div
+      className="relative mx-auto grid h-[calc(100vh-3.5rem)] max-w-6xl grid-cols-1 gap-0 lg:grid-cols-[320px_1fr]"
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        if (!busy) setDragging(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setDragging(false);
+      }}
+      onDrop={(e) => {
+        if (!e.dataTransfer.types.includes("Files")) return;
+        e.preventDefault();
+        setDragging(false);
+        if (busy) return;
+        const f = e.dataTransfer.files?.[0];
+        if (f) void ingestFile(f);
+      }}
+    >
+      {dragging && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center border-2 border-dashed border-accent bg-accent-soft/60">
+          <p className="rounded-lg bg-surface px-4 py-2 text-sm font-medium text-ink">
+            Lepaskan PDF untuk diunggah
+          </p>
+        </div>
+      )}
       {/* ---------------------------- Sidebar ---------------------------- */}
       <aside className="hidden flex-col border-r border-line lg:flex">
         <div className="border-b border-line p-4">
@@ -341,26 +372,19 @@ export default function AppPage() {
               type="file"
               accept="application/pdf"
               className="hidden"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) {
-                  setFile(f);
-                  // Upload immediately on mobile.
-                  const form = new FormData();
-                  form.append("file", f);
-                  setBusy(true);
-                  try {
-                    const r = await fetch("/api/ingest", { method: "POST", body: form });
-                    if (r.ok) await Promise.all([loadDocs(), loadUsage()]);
-                  } finally {
-                    setBusy(false);
-                    setFile(null);
-                  }
-                }
+                if (f) void ingestFile(f);
+                e.target.value = "";
               }}
             />
           </label>
         </div>
+        {status && (
+          <p className="border-b border-line bg-sunken px-3 py-2 text-xs text-muted lg:hidden">
+            {status}
+          </p>
+        )}
 
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
@@ -402,7 +426,8 @@ export default function AppPage() {
                       accept="application/pdf"
                       className="hidden"
                       onChange={(e) => {
-                        setFile(e.target.files?.[0] ?? null);
+                        const f = e.target.files?.[0];
+                        if (f) void ingestFile(f);
                         e.target.value = "";
                       }}
                     />
