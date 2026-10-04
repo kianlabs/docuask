@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   Alert,
@@ -526,6 +527,130 @@ export default function AppPage() {
 
 /* ----------------------------- Answer block ------------------------------ */
 
+/**
+ * Render one line of answer text with inline markup: **bold**, `code`, and
+ * citation markers (`[page 2]` or a bare `[1]`), which become anchor links to
+ * the matching source card.
+ */
+function renderInline(text: string, cites: Citation[], anchor: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const token = /(\*\*[^*]+\*\*|`[^`]+`|\[page\s*\d+\]|\[\d+\])/gi;
+  let cursor = 0;
+  let seq = 0;
+  let m: RegExpExecArray | null;
+  while ((m = token.exec(text)) !== null) {
+    if (m.index > cursor) out.push(text.slice(cursor, m.index));
+    const t = m[0];
+    if (t.startsWith("**")) {
+      out.push(
+        <strong key={`${anchor}-b${seq++}`} className="font-semibold">
+          {t.slice(2, -2)}
+        </strong>
+      );
+    } else if (t.startsWith("`")) {
+      out.push(
+        <code
+          key={`${anchor}-c${seq++}`}
+          className="rounded bg-sunken px-1 py-0.5 font-mono text-[0.85em]"
+        >
+          {t.slice(1, -1)}
+        </code>
+      );
+    } else {
+      const cite = /^\[(page\s*)?(\d+)\]$/i.exec(t);
+      const n = cite ? Number(cite[2]) : 0;
+      // "[page N]" matches by page number; a bare "[N]" is a 1-based source index.
+      const idx = !cite
+        ? -1
+        : cite[1]
+          ? cites.findIndex((c) => c.page === n)
+          : n >= 1 && n <= cites.length
+            ? n - 1
+            : -1;
+      if (idx < 0) {
+        out.push(t);
+      } else {
+        out.push(
+          <sup key={`${anchor}-r${seq++}`}>
+            <a
+              href={`#src-${anchor}-${idx + 1}`}
+              title={`${cites[idx].filename} — hlm. ${cites[idx].page}`}
+              className="mx-0.5 text-xs font-semibold text-accent hover:underline"
+            >
+              [{idx + 1}]
+            </a>
+          </sup>
+        );
+      }
+    }
+    cursor = m.index + t.length;
+  }
+  if (cursor < text.length) out.push(text.slice(cursor));
+  return out;
+}
+
+/**
+ * Lay out a full answer: blank-line-separated paragraphs, `-`/`*` bullets and
+ * `1.` numbered items become real lists, and `#` headings get emphasis. The
+ * model replies in Markdown, so without this the raw `**`/`-` leaked through.
+ */
+function AnswerBody({ msg }: { msg: Msg }) {
+  const cites = msg.citations ?? [];
+  const blocks: ReactNode[] = [];
+  let list: string[] = [];
+  let ordered = false;
+  let seq = 0;
+
+  const flush = () => {
+    if (list.length === 0) return;
+    const items = list;
+    const Tag = ordered ? "ol" : "ul";
+    blocks.push(
+      <Tag
+        key={`list-${seq++}`}
+        className={`ml-4 space-y-1 ${ordered ? "list-decimal" : "list-disc"}`}
+      >
+        {items.map((it, i) => (
+          <li key={i}>{renderInline(it, cites, msg.id)}</li>
+        ))}
+      </Tag>
+    );
+    list = [];
+  };
+
+  for (const raw of msg.text.split("\n")) {
+    const line = raw.trim();
+    if (!line) {
+      flush();
+      continue;
+    }
+    const bullet = /^[-*•]\s+(.*)$/.exec(line);
+    if (bullet) {
+      if (list.length === 0) ordered = false;
+      list.push(bullet[1]);
+      continue;
+    }
+    const numbered = /^\d+[.)]\s+(.*)$/.exec(line);
+    if (numbered) {
+      if (list.length === 0) ordered = true;
+      list.push(numbered[1]);
+      continue;
+    }
+    flush();
+    const heading = /^#{1,6}\s+(.*)$/.exec(line);
+    blocks.push(
+      <p
+        key={`p-${seq++}`}
+        className={heading ? "font-semibold text-ink" : undefined}
+      >
+        {renderInline(heading ? heading[1] : line, cites, msg.id)}
+      </p>
+    );
+  }
+  flush();
+  return <div className="space-y-2">{blocks}</div>;
+}
+
 function Answer({
   msg,
   copied,
@@ -538,8 +663,6 @@ function Answer({
   onFeedback: (v: "up" | "down") => void;
 }) {
   const cites = msg.citations ?? [];
-  // The model cites inline as "[page N]"; also accept a bare "[N]".
-  const parts = msg.text.split(/(\[page\s*\d+\]|\[\d+\])/gi);
 
   return (
     <div className="animate-fade-up">
@@ -552,31 +675,7 @@ function Answer({
       </div>
 
       <div className="rounded-2xl rounded-tl-sm border border-line bg-surface px-4 py-3 text-sm leading-relaxed text-ink shadow-card">
-        <p className="whitespace-pre-wrap">
-          {parts.map((p, i) => {
-            const m = /^\[(page\s*)?(\d+)\]$/i.exec(p);
-            if (!m) return <span key={i}>{p}</span>;
-            const n = Number(m[2]);
-            // "[page N]" matches by page; a bare "[N]" is a 1-based source index.
-            const cardIdx = m[1]
-              ? cites.findIndex((c) => c.page === n)
-              : n >= 1 && n <= cites.length
-                ? n - 1
-                : -1;
-            if (cardIdx < 0) return <span key={i}>{p}</span>;
-            return (
-              <sup key={i}>
-                <a
-                  href={`#src-${msg.id}-${cardIdx + 1}`}
-                  title={`${cites[cardIdx].filename} — hlm. ${cites[cardIdx].page}`}
-                  className="mx-0.5 text-xs font-semibold text-accent hover:underline"
-                >
-                  [{cardIdx + 1}]
-                </a>
-              </sup>
-            );
-          })}
-        </p>
+        <AnswerBody msg={msg} />
       </div>
 
       {/* Source cards */}
