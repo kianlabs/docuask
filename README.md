@@ -26,6 +26,8 @@ docker run -d --name docuask-pg \
 #    (Use a real secret in production; the fallback in roles.sql is dev-only.)
 export DOCUASK_APP_PASSWORD=change_me_app_pw
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/schema.sql
+docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/billing.sql
+docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/accounts.sql
 docker exec -i docuask-pg psql -U docuask -d docuask \
   -v app_password="$DOCUASK_APP_PASSWORD" -f - < sql/roles.sql
 
@@ -71,8 +73,18 @@ LTS works. Pin with `.node-version`.
 | `GET`  | `/api/chat`   | diagnostics (authenticated tenants only; embed provider, LLM, store counts) |
 | `GET`  | `/api/usage`  | this tenant's plan, usage, remaining quota |
 | `POST` | `/api/usage`  | mock self-upgrade — **disabled in production** unless `ALLOW_MOCK_UPGRADE=1` |
+| `POST` | `/api/auth/signup` | `{email, password}` → creates tenant + owner, sets session cookie, returns API key |
+| `POST` | `/api/auth/login`  | `{email, password}` → sets session cookie |
+| `POST` | `/api/auth/logout` | clears the session cookie |
+| `GET`  | `/api/account` | session-authenticated dashboard payload (email, API key, plan, usage, orders) |
+| `POST` | `/api/account/rotate-key` | rotate this tenant's API key (session-authenticated) |
+| `POST` | `/api/orders` | `{planCode}` → create a `pending` order for the signed-in tenant |
+| `GET`  | `/api/orders` | the signed-in tenant's own orders |
+| `DELETE` | `/api/orders?ref=...` | cancel one's own `pending` order |
 | `GET`  | `/api/admin`  | all tenants + usage (requires `x-admin-token`) |
 | `POST` | `/api/admin`  | operator plan change (requires `x-admin-token`) |
+| `GET`  | `/api/admin/orders` | all orders (requires `x-admin-token`) |
+| `POST` | `/api/admin/orders` | `{orderRef}` → mark paid + upgrade the tenant (requires `x-admin-token`) |
 | `POST` | `/api/webhook/payment` | payment-gateway callback (HMAC-SHA256 `x-payment-signature`; fail-closed) |
 
 All tenant endpoints require an API key. `/api/chat` GET only exposes the LLM
@@ -87,6 +99,25 @@ endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
 - In production the mock self-upgrade is blocked; plan changes come from the
   signed payment webhook (`PAYMENT_WEBHOOK_SECRET`). Unset secret = 503.
 
+## Accounts & orders
+
+Self-service onboarding and a gateway-agnostic purchase flow:
+
+- **Sign up** (`/signup`) creates a tenant + owner user in one transaction and
+  hands back an API key (also shown on `/account`). Passwords are hashed with
+  `scrypt` (`src/lib/password.ts`); sessions are a stateless HMAC cookie
+  (`src/lib/session.ts`, `SESSION_SECRET`, 30-day TTL).
+- **Buying a plan** (`/account`) creates a `pending` order. The plan does **not**
+  change until a trusted party confirms payment:
+  - **Manual today:** an operator marks the order paid in `/admin` (or via
+    `POST /api/admin/orders`), which calls `upgradePlan()`.
+  - **Gateway later:** point Midtrans/Xendit at `POST /api/webhook/payment`
+    with `{"orderRef": "ord_...", "status": "settlement"}`. The tenant + plan
+    are read from the stored order, so the gateway cannot choose them.
+- `users` and `orders` are RLS-protected with the same tenant policy as the rest
+  of the schema (see `sql/accounts.sql`); login-by-email and the admin order list
+  run under the transaction-local `app.is_admin` flag.
+
 ## Security
 
 - **Secrets stay in env.** `.env.local` is git-ignored; `.env.example` holds
@@ -96,6 +127,9 @@ endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
 - **Payment webhook is fail-closed.** With `PAYMENT_WEBHOOK_SECRET` unset,
   `/api/webhook/payment` returns 503. Requests must carry a valid
   HMAC-SHA256 signature.
+- **Customer sessions are fail-closed.** With `SESSION_SECRET` (or `ADMIN_TOKEN`)
+  unset, signup/login are disabled. Session cookies are `httpOnly`, `sameSite=lax`,
+  and `secure` in production; tokens are HMAC-signed so ids cannot be tampered with.
 - **Tenant isolation is in the database** (RLS), not only in application code.
 - The mock self-upgrade in `POST /api/usage` is disabled in production unless
   `ALLOW_MOCK_UPGRADE=1`.

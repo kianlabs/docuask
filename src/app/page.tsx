@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Citation {
   filename: string;
@@ -148,7 +149,20 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">DocuAsk</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-semibold text-white">DocuAsk</h1>
+          <nav className="flex gap-3 text-sm text-gray-400">
+            <Link href="/login" className="hover:text-white">
+              Masuk
+            </Link>
+            <Link href="/signup" className="hover:text-white">
+              Daftar
+            </Link>
+            <Link href="/account" className="hover:text-white">
+              Akun
+            </Link>
+          </nav>
+        </div>
         <p className="text-sm text-gray-400">
           Upload PDF, tanya apa pun, dapat jawaban dengan sitasi halaman.
         </p>

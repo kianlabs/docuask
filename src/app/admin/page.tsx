@@ -15,13 +15,28 @@ interface TenantRow {
   price_idr: number;
 }
 
+interface OrderRow {
+  order_ref: string;
+  tenant_id: number;
+  plan_code: string;
+  amount_idr: number;
+  status: string;
+  provider: string | null;
+  created_at: string;
+}
+
 function fmtLimit(v: number | null) {
   return v === null ? "∞" : String(v);
+}
+
+function rupiah(n: number) {
+  return "Rp " + n.toLocaleString("id-ID");
 }
 
 export default function AdminPage() {
   const [token, setToken] = useState("");
   const [rows, setRows] = useState<TenantRow[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -29,13 +44,38 @@ export default function AdminPage() {
     setBusy(true);
     setErr("");
     try {
-      const r = await fetch("/api/admin", { headers: { "x-admin-token": token } });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
-      setRows(j.tenants);
+      const [tr, or] = await Promise.all([
+        fetch("/api/admin", { headers: { "x-admin-token": token } }),
+        fetch("/api/admin/orders", { headers: { "x-admin-token": token } }),
+      ]);
+      const tj = await tr.json();
+      if (!tr.ok) throw new Error(tj.error || `HTTP ${tr.status}`);
+      setRows(tj.tenants);
+      const oj = await or.json();
+      if (or.ok) setOrders(oj.orders);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
       setRows([]);
+      setOrders([]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmOrder(orderRef: string) {
+    if (!confirm(`Tandai order ${orderRef} LUNAS dan naikkan paket tenant?`)) return;
+    setBusy(true);
+    try {
+      const r = await fetch("/api/admin/orders", {
+        method: "POST",
+        headers: { "x-admin-token": token, "Content-Type": "application/json" },
+        body: JSON.stringify({ orderRef }),
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      await load();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
     }
@@ -139,6 +179,60 @@ export default function AdminPage() {
         <p className="text-sm text-gray-500">
           Masukkan ADMIN_TOKEN lalu klik Muat.
         </p>
+      )}
+
+      <h2 className="mb-3 mt-8 text-lg font-medium text-white">Order</h2>
+      {orders.length === 0 ? (
+        <p className="text-sm text-gray-500">Belum ada order.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-ink-border">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-ink-card text-xs text-gray-400">
+              <tr>
+                <th className="px-3 py-2">Ref</th>
+                <th className="px-3 py-2">Tenant</th>
+                <th className="px-3 py-2">Paket</th>
+                <th className="px-3 py-2">Jumlah</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.order_ref} className="border-t border-ink-border text-gray-200">
+                  <td className="px-3 py-2 font-mono text-xs">{o.order_ref}</td>
+                  <td className="px-3 py-2">{o.tenant_id}</td>
+                  <td className="px-3 py-2">{o.plan_code}</td>
+                  <td className="px-3 py-2">{rupiah(o.amount_idr)}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={
+                        o.status === "paid"
+                          ? "text-emerald-300"
+                          : o.status === "cancelled"
+                            ? "text-gray-500"
+                            : "text-amber-300"
+                      }
+                    >
+                      {o.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">
+                    {o.status === "pending" && (
+                      <button
+                        onClick={() => confirmOrder(o.order_ref)}
+                        disabled={busy}
+                        className="rounded bg-white px-3 py-1 text-xs font-medium text-black disabled:opacity-40"
+                      >
+                        Tandai lunas
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </main>
   );

@@ -1,6 +1,6 @@
 # DocuAsk — Status
 
-**v0.3 — multi-tenant + bge-m3 + Postgres/pgvector + billing. Terverifikasi 2026-10-04.**
+**v0.4 — akun self-service + order flow + multi-tenant + bge-m3 + Postgres/pgvector + billing. Terverifikasi 2026-10-04.**
 
 ## Verifikasi (fresh, app sebagai role non-superuser)
 
@@ -38,6 +38,26 @@
 | `POST /api/webhook/payment` signature sah + `pending` | `{ok,ignored}` |
 | M1: `documents` dari tabel (bukan counter) | cocok dengan `COUNT(*)` nyata |
 
+### Akun & order (baru)
+| Cek | Hasil |
+|---|---|
+| `POST /api/auth/signup` email+password | 200, tenant baru + API key + cookie sesi |
+| signup email duplikat / invalid / password <8 | 400 |
+| `POST /api/auth/login` benar | 200 + cookie |
+| login password salah / email tak terdaftar | 401 (pesan sama) |
+| `GET /api/account` tanpa cookie | 401 |
+| `GET /api/account` dengan cookie | email, API key, plan, usage, orders |
+| `POST /api/orders {planCode:pro}` | 200, order `pending`, amount 99000 |
+| order `planCode` tak dikenal / `free` | 400 |
+| `GET /api/orders` tenant baru | `[]` (RLS: bukan order tenant lain) |
+| `GET /api/admin/orders` tanpa token | 401 |
+| `POST /api/admin/orders {orderRef}` | order → `paid`, `paid_at` terisi, plan tenant → pro |
+| `POST /api/account/rotate-key` | key lama invalid, key baru terbit |
+| `POST /api/auth/logout` | cookie terhapus, `/api/account` → 401 |
+| RLS `users`/`orders` tanpa tenant ctx (app role) | 0 baris |
+| RLS `orders` tenant lain | 0 baris |
+| `POST /api/webhook/payment` tanpa secret | 503 |
+
 ### RLS (7/7, setelah perbaikan NULLIF)
 | Tes | Hasil |
 |---|---|
@@ -52,6 +72,18 @@
 ### Anti-regresi pool
 26 panggilan berurutan selang-seling `/api/usage` ⇄ `/api/admin` → **semua 200**
 (sebelumnya selalu 500 saat berselang-seling).
+
+## Arsitektur akun & order
+
+- `users` (email unik, `password_hash` scrypt, `tenant_id`) — 1 akun = 1 tenant.
+- `orders` (`order_ref` unik, `tenant_id`, `plan_code`, `amount_idr`, `status`,
+  `provider`, `provider_ref`) — gateway-agnostic; provider NULL = alur manual.
+- Sesi = cookie HMAC tanpa tabel (`SESSION_SECRET`, fallback `ADMIN_TOKEN`).
+  Rotasi secret = semua pelanggan logout (trade-off MVP).
+- Alur beli: `/account` buat order `pending` → konfirmasi tepercaya
+  (`POST /api/admin/orders` atau webhook) → `upgradePlan()`.
+- `users`/`orders` pakai RLS pola sama (`sql/accounts.sql`); login-by-email &
+  daftar order admin lewat flag `app.is_admin`.
 
 ## Arsitektur billing
 
@@ -92,8 +124,8 @@ set -a && . ./.env.local && set +a
 npx next dev -p 3005     # http://localhost:3005 | /admin
 ```
 
-Setup DB (sekali): `sql/schema.sql`, `sql/roles.sql`, `sql/billing.sql` —
-selalu lewat `psql -f`, bukan heredoc.
+Setup DB (sekali): `sql/schema.sql`, `sql/roles.sql`, `sql/billing.sql`,
+`sql/accounts.sql` — selalu lewat `psql -f`, bukan heredoc.
 
 ## Roadmap sisa
 
@@ -101,8 +133,13 @@ selalu lewat `psql -f`, bukan heredoc.
   /api/webhook/payment` verifikasi HMAC-SHA256 (`x-payment-signature`,
   `PAYMENT_WEBHOOK_SECRET`, fail-closed 503) lalu `upgradePlan()`. Mock
   `/api/usage` diblokir di produksi kecuali `ALLOW_MOCK_UPGRADE=1`.
-- Login admin sungguhan (ganti `ADMIN_TOKEN` dengan role terautentikasi)
+- ~~Login admin sungguhan (ganti `ADMIN_TOKEN` dengan role terautentikasi)~~ —
+  **SEBAGIAN**: pelanggan kini punya login (`/signup`, `/login`, cookie sesi).
+  Login admin masih `ADMIN_TOKEN`.
+- ~~Akun self-service + order flow~~ — **SELESAI**: `users`/`orders`, signup/login,
+  dasbor `/account`, order → konfirmasi admin/webhook → `upgradePlan()`.
 - Billing otomatis bulanan (cron yang menutup periode & menagih)
+- Integrasi gateway asli (Midtrans/Xendit) memakai `orderRef` di webhook
 - OCR untuk PDF scan (kini ditolak 422)
 - Deploy
 
