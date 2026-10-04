@@ -49,10 +49,15 @@ const config: Config = {
           "0%, 80%, 100%": { opacity: "0.25" },
           "40%": { opacity: "1" },
         },
+        progress: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(400%)" },
+        },
       },
       animation: {
         "fade-up": "fade-up 0.18s ease-out both",
         blink: "blink 1.2s infinite ease-in-out",
+        progress: "progress 1.1s ease-in-out infinite",
       },
     },
   },

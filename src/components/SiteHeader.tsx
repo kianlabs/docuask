@@ -10,6 +10,13 @@ interface Me {
   planCode: string;
 }
 
+/** Human-friendly plan label for the header badge. */
+const PLAN_LABEL: Record<string, string> = {
+  free: "Gratis",
+  pro: "Pro",
+  bisnis: "Bisnis",
+};
+
 /**
  * Shared top bar. It probes /api/account to decide whether to show the
  * signed-in actions (Aplikasi / Akun / Keluar) or the public ones.
@@ -19,6 +26,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [me, setMe] = useState<Me | null>(null);
   const [checked, setChecked] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -37,6 +45,11 @@ export function SiteHeader() {
     return () => {
       alive = false;
     };
+  }, [pathname]);
+
+  // Close the mobile menu whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false);
   }, [pathname]);
 
   async function logout() {
@@ -80,7 +93,7 @@ export function SiteHeader() {
                   {me.email.slice(0, 1)}
                 </span>
                 <Badge tone="accent" className="hidden sm:inline-flex">
-                  {me.planCode}
+                  {PLAN_LABEL[me.planCode] ?? me.planCode}
                 </Badge>
               </Link>
               <Button variant="ghost" size="sm" onClick={logout} title="Keluar">
@@ -98,6 +111,50 @@ export function SiteHeader() {
               </LinkButton>
             </div>
           )}
+
+          {/* Mobile menu — the inline links above are hidden below `sm`. */}
+          <div className="relative sm:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label="Menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((v) => !v)}
+            >
+              <Icon name="menu" className="h-5 w-5" />
+            </Button>
+            {menuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  aria-hidden
+                  onClick={() => setMenuOpen(false)}
+                />
+                <div className="absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-pop">
+                  <Link
+                    href="/app"
+                    className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
+                  >
+                    Aplikasi
+                  </Link>
+                  <a
+                    href="/#harga"
+                    className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
+                  >
+                    Harga
+                  </a>
+                  {me && (
+                    <Link
+                      href="/account"
+                      className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
+                    >
+                      Akun
+                    </Link>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </nav>
       </div>
     </header>

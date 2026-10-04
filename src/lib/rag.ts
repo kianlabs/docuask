@@ -33,11 +33,14 @@ const SYSTEM_PROMPT = `You are DocuAsk, a document question-answering assistant.
 
 RULES:
 1. Answer ONLY from the RETRIEVED CONTEXT below. Never use outside knowledge.
-2. Every factual sentence must be supported by the context. After a sentence
-   that uses a source, cite it inline as [page N].
+2. Ground every factual sentence in the context and cite its source inline with
+   the marker [page N] (N is the page number shown in the context). Place the
+   marker at the end of the sentence it supports. You MUST include at least one
+   [page N] marker whenever you state a fact; never omit citations.
 3. If the context does not contain the answer, reply exactly:
    "Maaf, informasi itu tidak ada di dalam dokumen." and nothing else.
-4. Be concise and answer in the same language as the question.
+4. Be concise and answer in the same language as the question. Use short
+   Markdown: "- " for bullet lists and **bold** for key figures.
 5. Do not invent page numbers or quote text that is not in the context.`;
 
 function buildContext(chunks: RetrievedChunk[]): string {
@@ -46,6 +49,29 @@ function buildContext(chunks: RetrievedChunk[]): string {
       (c, i) => `[Sumber ${i + 1} — ${c.filename}, page ${c.page}]\n${c.text}`
     )
     .join("\n\n---\n\n");
+}
+
+// Matches any page citation the model might emit: the literal `[page N]` /
+// `[N]` marker, or a prose form ("halaman 2", "hlm. 2", "page 2").
+const CITATION_RE = /\[(?:page\s*)?\d+\]|(?:halaman|hlm\.?|page)\s*\d+/i;
+
+/**
+ * Deterministic citation safety net. Smaller/faster models do not always obey
+ * the "cite inline" rule, so if the answer carries no page reference at all we
+ * append a compact source line built from the retrieved pages. The UI turns
+ * `[page N]` into a link to the matching source card, so every answer ends up
+ * with a usable citation even when the model stays silent.
+ */
+function ensureCitations(answer: string, citations: Citation[]): string {
+  if (!answer || CITATION_RE.test(answer)) return answer;
+  // Do not decorate the grounded-refusal reply.
+  if (/tidak ada di dalam dokumen/i.test(answer)) return answer;
+  const pages = Array.from(new Set(citations.map((c) => c.page))).sort(
+    (a, b) => a - b
+  );
+  if (pages.length === 0) return answer;
+  const markers = pages.map((p) => `[page ${p}]`).join(" ");
+  return `${answer.trimEnd()}\n\nSumber: ${markers}`;
 }
 
 export async function answerQuestion(
@@ -114,7 +140,7 @@ export async function answerQuestion(
     chunks
   )}\n\n---\n\nQUESTION: ${q}`;
 
-  const answer = await chat(
+  const raw = await chat(
     [
       { role: "system", content: SYSTEM_PROMPT },
       { role: "user", content: userMsg },
@@ -122,8 +148,12 @@ export async function answerQuestion(
     { temperature: 0.1, maxTokens: 800 }
   );
 
+  const answer = raw
+    ? ensureCitations(raw, citations)
+    : "Maaf, informasi itu tidak ada di dalam dokumen.";
+
   return {
-    answer: answer || "Maaf, informasi itu tidak ada di dalam dokumen.",
+    answer,
     citations,
     usedLlm: true,
     embedProvider: provider,

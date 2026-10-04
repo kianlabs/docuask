@@ -46,6 +46,13 @@ interface Account {
   orders: Order[];
 }
 
+interface Diag {
+  llm?: { model?: string; configured?: boolean };
+  embed?: { provider?: string; model?: string; dims?: number };
+  tenantName?: string;
+  [k: string]: unknown;
+}
+
 const PLANS: (Plan & { tagline: string; featured?: boolean })[] = [
   {
     code: "free",
@@ -89,6 +96,7 @@ export default function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [notice, setNotice] = useState("");
+  const [diag, setDiag] = useState<Diag | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -108,6 +116,15 @@ export default function AccountPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    fetch("/api/chat")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j && setDiag(j as Diag))
+      .catch(() => {
+        /* diagnostics are optional */
+      });
+  }, []);
 
   async function buy(planCode: string) {
     setBusy(true);
@@ -387,6 +404,32 @@ export default function AccountPage() {
             <code className="rounded bg-sunken px-1 py-0.5 font-mono text-ink">x-api-key</code>{" "}
             pada panggilan API.
           </p>
+
+          {diag && (
+            <div className="mt-4 border-t border-line pt-4">
+              <p className="text-xs font-medium text-muted">Info teknis</p>
+              <dl className="mt-2 grid gap-x-6 gap-y-1 text-xs sm:grid-cols-2">
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Model bahasa</dt>
+                  <dd className="font-mono text-ink">
+                    {diag.llm?.model ?? "—"}
+                    {diag.llm?.configured === false && " (belum aktif)"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Embedding</dt>
+                  <dd className="font-mono text-ink">
+                    {diag.embed?.provider ?? "—"}
+                    {diag.embed?.dims ? ` · ${diag.embed.dims}d` : ""}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted">Tenant</dt>
+                  <dd className="font-mono text-ink">{diag.tenantName ?? "—"}</dd>
+                </div>
+              </dl>
+            </div>
+          )}
         </Card>
       </section>
     </div>

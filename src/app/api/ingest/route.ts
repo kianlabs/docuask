@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { pdfToPages, chunkPages } from "@/lib/pdf";
 import { embed } from "@/lib/embed";
-import { insertDocument, listDocuments, stats } from "@/lib/store";
+import { insertDocument, listDocuments, deleteDocument, stats } from "@/lib/store";
 import { authenticate } from "@/lib/auth";
 import { assertQuota, recordUsage, QuotaExceededError } from "@/lib/billing";
 import { serverError, badRequest } from "@/lib/http";
@@ -110,4 +110,28 @@ export async function GET(req: NextRequest) {
     documents: await listDocuments(auth.tenant.id),
     store: await stats(auth.tenant.id),
   });
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const auth = await authenticate(req);
+    if (!auth.tenant) {
+      return NextResponse.json({ error: auth.error }, { status: auth.status ?? 401 });
+    }
+    const id = Number(new URL(req.url).searchParams.get("id"));
+    if (!Number.isInteger(id) || id <= 0) {
+      return badRequest("valid document id required");
+    }
+    const filename = await deleteDocument(auth.tenant.id, id);
+    if (filename === null) {
+      return NextResponse.json({ error: "document not found" }, { status: 404 });
+    }
+    return NextResponse.json({
+      ok: true,
+      deleted: { id, filename },
+      store: await stats(auth.tenant.id),
+    });
+  } catch (err) {
+    return serverError("ingest.DELETE", err);
+  }
 }

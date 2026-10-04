@@ -54,12 +54,6 @@ interface Usage {
   remainingQuestions: number | null;
 }
 
-interface Diag {
-  embed?: { provider?: string; dims?: number };
-  tenantName?: string;
-  [k: string]: unknown;
-}
-
 const SAMPLE_QUESTIONS = [
   "Apa poin utama dokumen ini?",
   "Sebutkan kebijakan yang paling penting.",
@@ -81,10 +75,10 @@ export default function AppPage() {
   const [question, setQuestion] = useState("");
   const [thinking, setThinking] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
-  const [diag, setDiag] = useState<Diag | null>(null);
-  const [showDiag, setShowDiag] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [confirmId, setConfirmId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* --------------------------- data loaders ------------------------------ */
@@ -107,21 +101,12 @@ export default function AppPage() {
     }
   }, []);
 
-  const loadDiag = useCallback(async () => {
-    try {
-      const r = await fetch("/api/chat");
-      if (r.ok) setDiag(await r.json());
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
   useEffect(() => {
     (async () => {
-      await Promise.all([loadDocs(), loadUsage(), loadDiag()]);
+      await Promise.all([loadDocs(), loadUsage()]);
       setReady(true);
     })();
-  }, [loadDocs, loadUsage, loadDiag]);
+  }, [loadDocs, loadUsage]);
 
   useEffect(() => {
     // Only auto-scroll to the newest message (never force the whole page).
@@ -141,7 +126,7 @@ export default function AppPage() {
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
       setStatus(`✓ ${j.filename} — ${j.pages} halaman siap`);
       setFile(null);
-      await Promise.all([loadDocs(), loadUsage(), loadDiag()]);
+      await Promise.all([loadDocs(), loadUsage()]);
     } catch (e) {
       setStatus(`✗ ${e instanceof Error ? e.message : String(e)}`);
     } finally {
@@ -152,6 +137,25 @@ export default function AppPage() {
   async function upload() {
     if (!file) return;
     await ingestFile(file);
+  }
+
+  async function removeDoc(doc: Doc) {
+    setDeletingId(doc.id);
+    setStatus(`Menghapus ${doc.filename}…`);
+    try {
+      const r = await fetch(`/api/ingest?id=${doc.id}`, { method: "DELETE" });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
+      setStatus(`✓ ${doc.filename} dihapus`);
+      // If the deleted doc was the active filter, fall back to all documents.
+      setActiveDoc((cur) => (cur === doc.id ? null : cur));
+      await Promise.all([loadDocs(), loadUsage()]);
+    } catch (e) {
+      setStatus(`✗ ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setDeletingId(null);
+      setConfirmId(null);
+    }
   }
 
   async function ask(qOverride?: string) {
@@ -232,6 +236,8 @@ export default function AppPage() {
   }
 
   const hasDocs = docs.length > 0;
+  const confirmTarget =
+    confirmId !== null ? docs.find((d) => d.id === confirmId) ?? null : null;
 
   return (
     <div
@@ -275,8 +281,11 @@ export default function AppPage() {
             }`}
           >
             <Icon name="upload" className="h-5 w-5 text-muted" />
-            <span className="text-xs text-muted">
+            <span className="text-xs font-medium text-ink">
               {file ? file.name : "Unggah PDF"}
+            </span>
+            <span className="text-[11px] text-muted">
+              {file ? "Siap diproses" : "Klik atau tarik berkas ke sini"}
             </span>
             <input
               type="file"
@@ -293,7 +302,28 @@ export default function AppPage() {
               {busy ? "Memproses…" : "Proses berkas"}
             </Button>
           )}
-          {status && <p className="mt-2 text-xs text-muted">{status}</p>}
+          {busy && (
+            <div
+              className="mt-2 h-1 w-full overflow-hidden rounded-full bg-sunken"
+              role="progressbar"
+              aria-label="Memproses dokumen"
+            >
+              <span className="block h-full w-1/4 rounded-full bg-accent animate-progress" />
+            </div>
+          )}
+          {status && (
+            <p
+              className={`mt-2 text-xs ${
+                status.startsWith("✗")
+                  ? "text-danger"
+                  : status.startsWith("✓")
+                    ? "text-positive"
+                    : "text-muted"
+              }`}
+            >
+              {status}
+            </p>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto p-3">
@@ -312,10 +342,10 @@ export default function AppPage() {
                 </button>
               </li>
               {docs.map((d) => (
-                <li key={d.id}>
+                <li key={d.id} className="group relative">
                   <button
                     onClick={() => setActiveDoc(d.id)}
-                    className={`flex w-full items-start gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                    className={`flex w-full items-start gap-2 rounded-lg py-2 pl-3 pr-9 text-left text-sm transition-colors ${
                       activeDoc === d.id
                         ? "bg-accent-soft font-medium text-accent-hover"
                         : "text-muted hover:bg-sunken"
@@ -328,6 +358,14 @@ export default function AppPage() {
                         {d.pages} hal · {d.chunks} bagian
                       </span>
                     </span>
+                  </button>
+                  <button
+                    onClick={() => setConfirmId(d.id)}
+                    aria-label={`Hapus ${d.filename}`}
+                    title="Hapus dokumen"
+                    className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:bg-danger-soft hover:text-danger focus-visible:opacity-100 group-hover:opacity-100"
+                  >
+                    <Icon name="trash" className="h-4 w-4" />
                   </button>
                 </li>
               ))}
@@ -359,6 +397,7 @@ export default function AppPage() {
             value={activeDoc ?? ""}
             onChange={(e) => setActiveDoc(e.target.value ? Number(e.target.value) : null)}
             className="flex-1 rounded-lg border border-line-strong bg-surface px-2 py-1.5 text-sm"
+            aria-label="Pilih dokumen"
           >
             <option value="">Semua dokumen</option>
             {docs.map((d) => (
@@ -367,7 +406,20 @@ export default function AppPage() {
               </option>
             ))}
           </select>
-          <label className="rounded-lg border border-line-strong bg-surface px-3 py-1.5 text-sm text-muted">
+          {activeDoc !== null && (
+            <button
+              onClick={() => {
+                const d = docs.find((x) => x.id === activeDoc);
+                if (d) setConfirmId(d.id);
+              }}
+              aria-label="Hapus dokumen ini"
+              title="Hapus dokumen"
+              className="grid h-9 w-9 place-items-center rounded-lg border border-line-strong text-muted hover:bg-danger-soft hover:text-danger"
+            >
+              <Icon name="trash" className="h-4 w-4" />
+            </button>
+          )}
+          <label className="grid h-9 w-9 cursor-pointer place-items-center rounded-lg border border-line-strong bg-surface text-muted">
             <Icon name="upload" className="h-4 w-4" />
             <input
               type="file"
@@ -381,8 +433,21 @@ export default function AppPage() {
             />
           </label>
         </div>
+        {busy && (
+          <div className="h-1 w-full overflow-hidden bg-sunken lg:hidden" role="progressbar" aria-label="Memproses dokumen">
+            <span className="block h-full w-1/4 rounded-full bg-accent animate-progress" />
+          </div>
+        )}
         {status && (
-          <p className="border-b border-line bg-sunken px-3 py-2 text-xs text-muted lg:hidden">
+          <p
+            className={`border-b border-line bg-sunken px-3 py-2 text-xs lg:hidden ${
+              status.startsWith("✗")
+                ? "text-danger"
+                : status.startsWith("✓")
+                  ? "text-positive"
+                  : "text-muted"
+            }`}
+          >
             {status}
           </p>
         )}
@@ -502,25 +567,52 @@ export default function AppPage() {
               <Icon name="send" className="h-4 w-4" />
             </Button>
           </div>
-
-          {/* Diagnostics — hidden by default */}
-          <div className="mx-auto mt-2 flex max-w-[720px] items-center justify-between">
-            <button
-              onClick={() => setShowDiag((v) => !v)}
-              className="text-xs text-muted hover:text-ink"
-            >
-              {showDiag ? "Sembunyikan diagnostik" : "Diagnostik"}
-            </button>
-            {showDiag && diag && (
-              <p className="font-mono text-body-sm text-muted">
-                embed: {diag.embed?.provider ?? "?"}
-                {diag.embed?.dims ? ` (${diag.embed.dims}d)` : ""} · tenant:{" "}
-                {diag.tenantName ?? "—"}
-              </p>
-            )}
-          </div>
         </div>
       </section>
+
+      {/* Shared delete confirmation — visible on every viewport, including
+          mobile where the sidebar (and its list) is hidden. */}
+      {confirmTarget && (
+        <div
+          className="absolute inset-0 z-30 grid place-items-center bg-ink/20 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Konfirmasi hapus dokumen"
+          onClick={() => deletingId === null && setConfirmId(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl border border-line bg-surface p-5 shadow-pop"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-heading text-heading-3 font-semibold text-ink">
+              Hapus dokumen?
+            </h3>
+            <p className="mt-1.5 text-sm text-muted">
+              <span className="font-medium text-ink">{confirmTarget.filename}</span> akan
+              dihapus beserta seluruh bagiannya. Tindakan ini tidak bisa dibatalkan.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setConfirmId(null)}
+                disabled={deletingId !== null}
+              >
+                Batal
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => removeDoc(confirmTarget)}
+                disabled={deletingId !== null}
+              >
+                <Icon name="trash" className="h-4 w-4" />
+                {deletingId === confirmTarget.id ? "Menghapus…" : "Hapus"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -529,12 +621,16 @@ export default function AppPage() {
 
 /**
  * Render one line of answer text with inline markup: **bold**, `code`, and
- * citation markers (`[page 2]` or a bare `[1]`), which become anchor links to
- * the matching source card.
+ * citation markers, which become anchor links to the matching source card.
+ * Citations may arrive as `[page 2]`, a bare `[1]`, or plain prose such as
+ * "halaman 2" / "hlm. 2" / "page 2" — the model is not always literal. A prose
+ * mention only becomes a link when that page is actually among the sources,
+ * so incidental numbers are left untouched.
  */
 function renderInline(text: string, cites: Citation[], anchor: string): ReactNode[] {
   const out: ReactNode[] = [];
-  const token = /(\*\*[^*]+\*\*|`[^`]+`|\[page\s*\d+\]|\[\d+\])/gi;
+  const token =
+    /(\*\*[^*]+\*\*|`[^`]+`|\[page\s*\d+\]|\[\d+\]|(?:halaman|hlm\.?|page)\s*\d+)/gi;
   let cursor = 0;
   let seq = 0;
   let m: RegExpExecArray | null;
@@ -557,16 +653,22 @@ function renderInline(text: string, cites: Citation[], anchor: string): ReactNod
         </code>
       );
     } else {
-      const cite = /^\[(page\s*)?(\d+)\]$/i.exec(t);
-      const n = cite ? Number(cite[2]) : 0;
-      // "[page N]" matches by page number; a bare "[N]" is a 1-based source index.
-      const idx = !cite
-        ? -1
-        : cite[1]
+      // "[page N]" matches by page number; a bare "[N]" is a 1-based source
+      // index; a prose mention ("halaman N") matches by page number.
+      const bracket = /^\[(page\s*)?(\d+)\]$/i.exec(t);
+      const word = /^(?:halaman|hlm\.?|page)\s*(\d+)$/i.exec(t);
+      let idx = -1;
+      if (bracket) {
+        const n = Number(bracket[2]);
+        idx = bracket[1]
           ? cites.findIndex((c) => c.page === n)
           : n >= 1 && n <= cites.length
             ? n - 1
             : -1;
+      } else if (word) {
+        const n = Number(word[1]);
+        idx = cites.findIndex((c) => c.page === n);
+      }
       if (idx < 0) {
         out.push(t);
       } else {

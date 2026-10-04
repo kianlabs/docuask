@@ -162,6 +162,24 @@ export async function listDocuments(tenantId: number) {
   });
 }
 
+/**
+ * Delete one document (and its chunks, via ON DELETE CASCADE) scoped to the
+ * tenant. Returns the deleted filename, or null when the id is not theirs.
+ * RLS already scopes the rows; the explicit tenant_id keeps intent obvious.
+ */
+export async function deleteDocument(
+  tenantId: number,
+  documentId: number
+): Promise<string | null> {
+  return withTenant(tenantId, async (c) => {
+    const res = await c.query<{ filename: string }>(
+      `DELETE FROM documents WHERE id = $1 AND tenant_id = $2 RETURNING filename`,
+      [documentId, tenantId]
+    );
+    return res.rows[0]?.filename ?? null;
+  });
+}
+
 /* -------------------------------- retrieve ------------------------------- */
 
 export interface RetrievedChunk {
