@@ -22,7 +22,9 @@ docker run -d --name docuask-pg \
   pgvector/pgvector:pg18
 
 # 2. Schema + a NON-superuser app role (RLS requires it — see PITFALLS).
-#    Pass the app role's password explicitly; do NOT rely on the dev default.
+#    Set the app-role password once; it must match the one in DATABASE_URL.
+#    (Use a real secret in production; the fallback in roles.sql is dev-only.)
+export DOCUASK_APP_PASSWORD=change_me_app_pw
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/schema.sql
 docker exec -i docuask-pg psql -U docuask -d docuask \
   -v app_password="$DOCUASK_APP_PASSWORD" -f - < sql/roles.sql
@@ -35,8 +37,8 @@ npm install
 npx next dev -p 3005
 ```
 
-Set `DOCUASK_APP_PASSWORD` to the same value used in `DATABASE_URL`, and use a
-real secret in production — the password in `sql/roles.sql` is a dev default only.
+The app-role password (`DOCUASK_APP_PASSWORD`) must match the one embedded in
+`DATABASE_URL`. Use a real secret in production.
 
 Nodes 22 LTS is required if you use `better-sqlite3`; with Postgres any recent
 LTS works. Pin with `.node-version`.
