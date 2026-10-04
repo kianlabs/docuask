@@ -89,7 +89,7 @@ export default function LandingPage() {
       <section className="grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
         <div>
           <Badge tone="accent" className="mb-4">
-            <Icon name="spark" className="h-3.5 w-3.5" /> Didukung AI
+            <Icon name="search" className="h-3.5 w-3.5" /> Didukung AI
           </Badge>
           <h1 className="font-heading text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
             Tanya apa pun ke dokumenmu, dapat jawaban bersitasi.
@@ -120,7 +120,7 @@ export default function LandingPage() {
           <div className="mt-3">
             <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
               <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
-                <Icon name="spark" className="h-3 w-3" />
+                <Icon name="file" className="h-3 w-3" />
               </span>
               DocuAsk
             </div>

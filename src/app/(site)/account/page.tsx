@@ -205,7 +205,7 @@ export default function AccountPage() {
       {pending && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning-soft px-4 py-3">
           <div className="flex items-center gap-2 text-sm text-warning">
-            <Icon name="spark" className="h-4 w-4" />
+            <Icon name="clock" className="h-4 w-4" />
             <span>
               Pesanan <span className="font-medium">{pending.order_ref}</span> menunggu
               pembayaran.

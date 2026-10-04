@@ -432,7 +432,7 @@ export default function AppPage() {
               {thinking && (
                 <div className="flex items-center gap-3 text-sm text-muted">
                   <span className="grid h-6 w-6 place-items-center rounded-md bg-accent text-white">
-                    <Icon name="spark" className="h-3.5 w-3.5" />
+                    <Icon name="search" className="h-3.5 w-3.5" />
                   </span>
                   <span>Mencari di dokumen</span>
                   <Dots />
@@ -520,7 +520,7 @@ function Answer({
     <div className="animate-fade-up">
       <div className="mb-1.5 flex items-center gap-2 text-xs font-medium text-muted">
         <span className="grid h-6 w-6 place-items-center rounded-md bg-accent text-white">
-          <Icon name="spark" className="h-3.5 w-3.5" />
+          <Icon name="file" className="h-3.5 w-3.5" />
         </span>
         DocuAsk
         {msg.usedLlm === false && <Badge tone="neutral">tanpa LLM</Badge>}
