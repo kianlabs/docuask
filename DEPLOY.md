@@ -36,6 +36,8 @@ Ships the app plus a pgvector database and runs migrations automatically.
 
 ```bash
 cp .env.example .env      # fill the values (see the header of docker-compose.yml)
+# Set NEXT_PUBLIC_SITE_URL in .env to your public origin (e.g. https://docuask.id)
+# BEFORE building — it is inlined into prerendered /, /robots.txt, /sitemap.xml.
 docker compose up -d --build
 docker compose logs -f app
 curl -fsS http://localhost:3000/api/health   # expect {"ok":true,...}
@@ -43,6 +45,10 @@ curl -fsS http://localhost:3000/api/health   # expect {"ok":true,...}
 
 The `migrate` service applies `sql/*.sql` (idempotent) and creates the app role
 on every `up`, so the first boot is fully provisioned.
+
+> **`NEXT_PUBLIC_SITE_URL` is a build-time value.** It is baked into static
+> routes and OG/canonical tags by `docker build --build-arg` (compose passes it
+> from `.env`). Changing it at runtime has no effect — rebuild the image.
 
 ### Behind a reverse proxy (TLS)
 

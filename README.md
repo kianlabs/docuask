@@ -90,15 +90,35 @@ Node 22 LTS is pinned in `.node-version`.
 The rate limiter (`src/lib/ratelimit.ts`) is in-memory and **per-process**; move
 it to a shared store before running more than one replica.
 
-## Sample document
+## Sample documents
 
 `samples/kebijakan-cuti-contoh.pdf` is a 3-page sample with a real text layer
-(HR leave/benefit policy) for trying ingest + Q&A. Regenerate or make your own
-with the dependency-free generator:
+(HR leave/benefit policy) for trying ingest + Q&A.
+
+For a richer test, `samples/make_documents.py` generates a **library of 10
+documents** (HR, legal, operations, IT, finance) with distinct facts, so you can
+try cross-document questions and verify answers against the source. Both
+generators are dependency-free (real text layer, base-14 Helvetica):
 
 ```bash
-python3 samples/make_sample_pdf.py [output.pdf]
+python3 samples/make_sample_pdf.py [output.pdf]      # single document
+python3 samples/make_documents.py [out_dir]          # 10 documents -> samples/library/
 ```
+
+Ingest one file, or the whole library:
+
+```bash
+# single file
+curl -H "x-api-key: $API_KEY" -F "file=@samples/kebijakan-cuti-contoh.pdf" \
+  http://localhost:3005/api/ingest
+
+# whole library
+for f in samples/library/*.pdf; do
+  curl -H "x-api-key: $API_KEY" -F "file=@$f" http://localhost:3005/api/ingest
+done
+```
+
+The `library/` output is generated on demand and not committed.
 
 Then ingest and query it (grab an API key from `/account` or a dev key):
 

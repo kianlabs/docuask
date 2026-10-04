@@ -11,6 +11,12 @@ FROM node:22-slim AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Public site URL is inlined at BUILD time into prerendered routes
+# (/, /robots.txt, /sitemap.xml) and OG/canonical tags — a runtime env var is
+# too late for static output. Pass it via `docker build --build-arg` or compose
+# `build.args`. Defaults to the local dev origin when unset.
+ARG NEXT_PUBLIC_SITE_URL=http://localhost:3005
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 # Build-time public config only. Secrets are supplied at RUNTIME (see compose),
 # never baked into the image. NEXT_TELEMETRY_DISABLED keeps builds offline-clean.
 ENV NEXT_TELEMETRY_DISABLED=1

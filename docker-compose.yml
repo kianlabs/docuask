@@ -62,7 +62,13 @@ services:
     restart: "no"
 
   app:
-    build: .
+    build:
+      context: .
+      # Public origin is inlined into prerendered pages at build time; set it
+      # here (and in .env) to your real domain so canonical/OG/robots URLs are
+      # absolute. Runtime env alone will NOT change static output.
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-http://localhost:3005}
     restart: unless-stopped
     depends_on:
       db:

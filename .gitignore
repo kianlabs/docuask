@@ -19,3 +19,7 @@ next-env.d.ts
 coverage/
 dist/
 
+
+# Generated sample library (see samples/make_documents.py)
+samples/library/
+samples/__pycache__/
