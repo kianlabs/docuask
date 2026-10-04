@@ -45,6 +45,25 @@ The app-role password (`DOCUASK_APP_PASSWORD`) must match the one embedded in
 Nodes 22 LTS is required if you use `better-sqlite3`; with Postgres any recent
 LTS works. Pin with `.node-version`.
 
+## Sample document
+
+`samples/kebijakan-cuti-contoh.pdf` is a 3-page sample with a real text layer
+(HR leave/benefit policy) for trying ingest + Q&A. Regenerate or make your own
+with the dependency-free generator:
+
+```bash
+python3 samples/make_sample_pdf.py [output.pdf]
+```
+
+Then ingest and query it (grab an API key from `/account` or a dev key):
+
+```bash
+curl -H "x-api-key: $API_KEY" -F "file=@samples/kebijakan-cuti-contoh.pdf" \
+  http://localhost:3005/api/ingest
+curl -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
+  -d '{"question":"Berapa hari cuti tahunan?"}' http://localhost:3005/api/chat
+```
+
 ## Multi-tenancy
 
 - Every request carries an API key (`x-api-key` or `Authorization: Bearer`).
