@@ -84,14 +84,14 @@ const FAQ = [
 
 export default function LandingPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4">
+    <div className="mx-auto max-w-[960px] px-4">
       {/* Hero */}
       <section className="grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
         <div>
           <Badge tone="accent" className="mb-4">
             <Icon name="search" className="h-3.5 w-3.5" /> Didukung AI
           </Badge>
-          <h1 className="font-heading text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+          <h1 className="font-heading text-display font-bold text-ink">
             Tanya apa pun ke dokumenmu, dapat jawaban bersitasi.
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted">
@@ -112,7 +112,7 @@ export default function LandingPage() {
         </div>
 
         {/* Sample answer card */}
-        <Card className="p-5">
+        <Card className="rounded-2xl p-5">
           <div className="rounded-lg bg-sunken px-3 py-2 text-sm text-ink">
             <span className="mr-2 text-muted">Kamu</span>
             {SAMPLE.q}
@@ -126,14 +126,14 @@ export default function LandingPage() {
             </div>
             <p className="text-sm leading-relaxed text-ink">
               {SAMPLE.a}{" "}
-              <sup className="font-medium text-accent">[1]</sup>
-              <sup className="font-medium text-accent">[2]</sup>
+              <sup className="text-xs font-semibold text-accent">[1]</sup>
+              <sup className="text-xs font-semibold text-accent">[2]</sup>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {SAMPLE.cites.map((c, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1 text-xs text-muted"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
                 >
                   <span className="font-medium text-accent">[{i + 1}]</span>
                   <Icon name="file" className="h-3.5 w-3.5" />
@@ -147,7 +147,7 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section className="border-t border-line py-16">
-        <h2 className="font-heading text-center text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
           Tiga langkah, selesai.
         </h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -156,7 +156,7 @@ export default function LandingPage() {
               <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-soft font-semibold text-accent-hover">
                 {s.n}
               </div>
-              <h3 className="mt-3 font-medium text-ink">{s.title}</h3>
+              <h3 className="mt-3 font-heading text-heading-3 font-semibold text-ink">{s.title}</h3>
               <p className="mt-1 text-sm text-muted">{s.body}</p>
             </div>
           ))}
@@ -166,7 +166,7 @@ export default function LandingPage() {
       {/* Pricing — Good / Better / Best */}
       <section id="harga" className="scroll-mt-20 border-t border-line py-16">
         <div className="text-center">
-          <h2 className="font-heading text-2xl font-semibold text-ink">Harga yang sederhana</h2>
+          <h2 className="font-heading text-heading-2 font-semibold text-ink">Harga yang sederhana</h2>
           <p className="mt-2 text-sm text-muted">
             Mulai gratis, tingkatkan saat butuh. Batalkan kapan saja.
           </p>
@@ -176,7 +176,7 @@ export default function LandingPage() {
             <Card
               key={p.code}
               className={`relative flex flex-col p-6 ${
-                p.featured ? "border-accent ring-1 ring-accent" : ""
+                p.featured ? "rounded-2xl border-accent ring-1 ring-accent" : ""
               }`}
             >
               {p.featured && (
@@ -184,7 +184,7 @@ export default function LandingPage() {
                   <Badge tone="accent">Direkomendasikan</Badge>
                 </div>
               )}
-              <h3 className="font-medium text-ink">{p.name}</h3>
+              <h3 className="font-heading text-heading-2 font-semibold text-ink">{p.name}</h3>
               <p className="mt-0.5 text-xs text-muted">{p.tagline}</p>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-3xl font-semibold text-ink">{p.price}</span>
@@ -212,7 +212,7 @@ export default function LandingPage() {
 
       {/* FAQ */}
       <section className="border-t border-line py-16">
-        <h2 className="font-heading text-center text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
           Pertanyaan umum
         </h2>
         <div className="mx-auto mt-8 max-w-2xl divide-y divide-line rounded-xl border border-line bg-surface">
@@ -230,7 +230,7 @@ export default function LandingPage() {
 
       {/* Footer CTA */}
       <section className="border-t border-line py-16 text-center">
-        <h2 className="font-heading text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-heading-2 font-semibold text-ink">
           Siap bertanya ke dokumenmu?
         </h2>
         <div className="mt-6 flex justify-center gap-3">

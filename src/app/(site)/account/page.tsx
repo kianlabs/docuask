@@ -164,14 +164,14 @@ export default function AccountPage() {
 
   if (err) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16">
+      <div className="mx-auto max-w-[960px] px-4 py-16">
         <Alert>{err}</Alert>
       </div>
     );
   }
   if (!acct) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16">
+      <div className="mx-auto max-w-[960px] px-4 py-16">
         <div className="h-40 animate-pulse rounded-xl bg-sunken" />
       </div>
     );
@@ -181,11 +181,11 @@ export default function AccountPage() {
   const pending = acct.orders.find((o) => o.status === "pending");
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-10">
+    <div className="mx-auto max-w-[960px] px-4 py-10">
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold font-heading text-ink">Dasbor akun</h1>
+          <h1 className="font-heading text-heading-1 font-bold text-ink">Dasbor akun</h1>
           <p className="mt-0.5 text-sm text-muted">{acct.email}</p>
         </div>
         <Link
@@ -218,7 +218,7 @@ export default function AccountPage() {
       {/* Usage */}
       <Card className="mb-8 p-6">
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-sm font-medium text-ink">Pemakaian bulan ini</h2>
+          <h2 className="font-heading text-heading-3 font-semibold text-ink">Pemakaian bulan ini</h2>
           <Badge tone="accent">{usage.plan.name}</Badge>
         </div>
         <div className="grid gap-6 sm:grid-cols-2">
@@ -229,7 +229,7 @@ export default function AccountPage() {
 
       {/* Plans — Good / Better / Best */}
       <section className="mb-10">
-        <h2 className="mb-1 text-sm font-medium text-ink">Paket</h2>
+        <h2 className="mb-1 font-heading text-heading-2 font-semibold text-ink">Paket</h2>
         <p className="mb-4 text-xs text-muted">
           Tingkatkan kapan saja. Paket aktif setelah pembayaran dikonfirmasi.
         </p>
@@ -240,7 +240,7 @@ export default function AccountPage() {
               <Card
                 key={p.code}
                 className={`relative flex flex-col p-5 ${
-                  p.featured ? "border-accent ring-1 ring-accent" : ""
+                  p.featured ? "rounded-2xl border-accent ring-1 ring-accent" : ""
                 }`}
               >
                 {p.featured && (
@@ -249,7 +249,7 @@ export default function AccountPage() {
                   </div>
                 )}
                 <div className="flex items-center justify-between">
-                  <h3 className="font-medium text-ink">{p.name}</h3>
+                  <h3 className="font-heading text-heading-2 font-semibold text-ink">{p.name}</h3>
                   {current && <Badge tone="positive">Paket aktif</Badge>}
                 </div>
                 <p className="mt-0.5 text-xs text-muted">{p.tagline}</p>
@@ -281,7 +281,7 @@ export default function AccountPage() {
 
       {/* Comparison table */}
       <section className="mb-10">
-        <h2 className="mb-3 text-sm font-medium text-ink">Perbandingan paket</h2>
+        <h2 className="mb-3 font-heading text-heading-2 font-semibold text-ink">Perbandingan paket</h2>
         <div className="overflow-x-auto rounded-xl border border-line bg-surface">
           <table className="w-full text-left text-sm">
             <thead>
@@ -315,7 +315,7 @@ export default function AccountPage() {
 
       {/* Orders */}
       <section className="mb-10">
-        <h2 className="mb-3 text-sm font-medium text-ink">Riwayat pesanan</h2>
+        <h2 className="mb-3 font-heading text-heading-2 font-semibold text-ink">Riwayat pesanan</h2>
         {acct.orders.length === 0 ? (
           <p className="text-sm text-muted">Belum ada pesanan.</p>
         ) : (
@@ -365,7 +365,7 @@ export default function AccountPage() {
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-medium text-ink">API key</h2>
+              <h2 className="font-heading text-heading-3 font-semibold text-ink">API key</h2>
               <p className="mt-0.5 text-xs text-muted">
                 Untuk developer & akses programatik. Di aplikasi kamu tidak perlu ini.
               </p>

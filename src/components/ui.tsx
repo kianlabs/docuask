@@ -86,7 +86,7 @@ export function Badge({
 }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${TONES[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${TONES[tone]} ${className}`}
     >
       {children}
     </span>
@@ -179,7 +179,7 @@ export function QuotaBar({
           {unlimited ? " · tak terbatas" : ` / ${max}`}
         </span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-sunken">
+      <div className="h-2 w-full overflow-hidden rounded-full bg-sunken">
         <div
           className={`h-full rounded-full transition-all ${
             near ? "bg-warning" : "bg-accent"

@@ -48,7 +48,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+      <div className="mx-auto flex h-14 max-w-[960px] items-center justify-between px-4">
         <Link href="/" className="shrink-0" aria-label="DocuAsk — beranda">
           <Logo />
         </Link>
@@ -76,7 +76,7 @@ export function SiteHeader() {
                 className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-sunken"
                 title={me.email}
               >
-                <span className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-[11px] font-semibold uppercase text-accent-hover">
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-accent-soft text-xs font-semibold uppercase text-accent-hover">
                   {me.email.slice(0, 1)}
                 </span>
                 <Badge tone="accent" className="hidden sm:inline-flex">

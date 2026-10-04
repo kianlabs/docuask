@@ -233,7 +233,7 @@ export default function AppPage() {
       <aside className="hidden flex-col border-r border-line lg:flex">
         <div className="border-b border-line p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium text-ink">Dokumen</h2>
+            <h2 className="font-heading text-heading-3 font-semibold text-ink">Dokumen</h2>
             <Badge tone="neutral">{docs.length}</Badge>
           </div>
 
@@ -292,7 +292,7 @@ export default function AppPage() {
                     <Icon name="file" className="mt-0.5 h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{d.filename}</span>
-                      <span className="block text-[11px] text-muted">
+                      <span className="block text-body-sm text-muted">
                         {d.pages} hal · {d.chunks} bagian
                       </span>
                     </span>
@@ -365,11 +365,11 @@ export default function AppPage() {
         {/* Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {messages.length === 0 ? (
-            <div className="mx-auto max-w-2xl pt-6">
+            <div className="mx-auto max-w-[720px] pt-6">
               {hasDocs ? (
                 <>
                   <div className="mb-6 text-center">
-                    <h2 className="font-heading text-lg font-semibold text-ink">
+                    <h2 className="font-heading text-heading-2 font-semibold text-ink">
                       Tanya apa pun tentang dokumenmu
                     </h2>
                     <p className="mt-1 text-sm text-muted">
@@ -411,7 +411,7 @@ export default function AppPage() {
               )}
             </div>
           ) : (
-            <div className="mx-auto max-w-2xl space-y-6">
+            <div className="mx-auto max-w-[720px] space-y-6">
               {messages.map((m) =>
                 m.role === "user" ? (
                   <div key={m.id} className="flex justify-end">
@@ -452,7 +452,7 @@ export default function AppPage() {
 
         {/* Composer */}
         <div className="border-t border-line bg-surface/60 px-4 py-3 sm:px-8">
-          <div className="mx-auto flex max-w-2xl items-end gap-2">
+          <div className="mx-auto flex max-w-[720px] items-end gap-2">
             <Input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
@@ -478,15 +478,15 @@ export default function AppPage() {
           </div>
 
           {/* Diagnostics — hidden by default */}
-          <div className="mx-auto mt-2 flex max-w-2xl items-center justify-between">
+          <div className="mx-auto mt-2 flex max-w-[720px] items-center justify-between">
             <button
               onClick={() => setShowDiag((v) => !v)}
-              className="text-[11px] text-muted hover:text-ink"
+              className="text-xs text-muted hover:text-ink"
             >
               {showDiag ? "Sembunyikan diagnostik" : "Diagnostik"}
             </button>
             {showDiag && diag && (
-              <p className="font-mono text-[11px] text-muted">
+              <p className="font-mono text-body-sm text-muted">
                 embed: {diag.embed?.provider ?? "?"}
                 {diag.embed?.dims ? ` (${diag.embed.dims}d)` : ""} · tenant:{" "}
                 {diag.tenantName ?? "—"}
@@ -544,7 +544,7 @@ function Answer({
                 <a
                   href={`#src-${msg.id}-${cardIdx + 1}`}
                   title={`${cites[cardIdx].filename} — hlm. ${cites[cardIdx].page}`}
-                  className="mx-0.5 font-medium text-accent hover:underline"
+                  className="mx-0.5 text-xs font-semibold text-accent hover:underline"
                 >
                   [{cardIdx + 1}]
                 </a>
@@ -567,7 +567,7 @@ function Answer({
               className="scroll-mt-20 rounded-lg border border-line bg-surface px-3 py-2.5"
             >
               <div className="flex items-center gap-2 text-xs">
-                <span className="grid h-4 w-4 place-items-center rounded bg-accent-soft text-[10px] font-semibold text-accent-hover">
+                <span className="grid h-4 w-4 place-items-center rounded-md bg-accent-soft text-xs font-semibold text-accent">
                   {i + 1}
                 </span>
                 <Icon name="file" className="h-3.5 w-3.5 text-muted" />

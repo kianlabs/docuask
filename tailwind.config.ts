@@ -30,10 +30,11 @@ const config: Config = {
         mono: ["var(--font-mono)", "monospace"],
       },
       fontSize: {
-        display: ["36px", { lineHeight: "1.1", letterSpacing: "-0.75px", fontWeight: "700" }],
-        "heading-1": ["28px", { lineHeight: "1.2", letterSpacing: "-0.5px", fontWeight: "700" }],
-        "heading-2": ["22px", { lineHeight: "1.25", letterSpacing: "-0.3px", fontWeight: "600" }],
-        "heading-3": ["18px", { lineHeight: "1.3", letterSpacing: "-0.1px", fontWeight: "600" }],
+        display: ["36px", { lineHeight: "1.1", letterSpacing: "-0.75px" }],
+        "heading-1": ["28px", { lineHeight: "1.2", letterSpacing: "-0.5px" }],
+        "heading-2": ["22px", { lineHeight: "1.25", letterSpacing: "-0.3px" }],
+        "heading-3": ["18px", { lineHeight: "1.3", letterSpacing: "-0.1px" }],
+        "body-sm": ["13px", { lineHeight: "1.5" }],
       },
       boxShadow: {
         card: "0 1px 2px 0 rgba(26,26,30,0.04), 0 1px 3px 0 rgba(26,26,30,0.06)",
