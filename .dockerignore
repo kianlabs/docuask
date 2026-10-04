@@ -1,0 +1,35 @@
+# Never ship secrets or local state into the image.
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.staging
+
+# Build output / caches are regenerated inside the image.
+node_modules
+.next
+out
+dist
+coverage
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Dev / VCS noise.
+.git
+.gitignore
+.github
+.vscode
+.idea
+.DS_Store
+*.log
+npm-debug.log*
+
+# Docs and samples are not needed at runtime (sql/ is copied explicitly).
+# `public/` MUST stay: it carries the self-hosted fonts and icon.svg.
+README.md
+STATUS.md
+DESIGN.md
+LICENSE
+samples
+scripts

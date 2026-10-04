@@ -5,15 +5,26 @@
 -- Run as the owner/superuser. Provide the app password explicitly:
 --   psql "$ADMIN_URL" -v app_password="$DOCUASK_APP_PASSWORD" -f sql/roles.sql
 -- If omitted, a throwaway dev password is used — NEVER use that in production.
+--
+-- Idempotent: safe to re-run on every deploy. We do NOT `DROP ROLE` (that fails
+-- once the role has grants, breaking re-runs under ON_ERROR_STOP); instead we
+-- create it only if absent and always (re)set the password.
 \if :{?app_password}
 \else
 \set app_password 'dev_only_change_me'
 \endif
 
-DROP ROLE IF EXISTS docuask_app;
-CREATE ROLE docuask_app
-  LOGIN PASSWORD :'app_password'
-  NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'docuask_app') THEN
+    CREATE ROLE docuask_app
+      LOGIN
+      NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
+  END IF;
+END
+$$;
+
+ALTER ROLE docuask_app WITH LOGIN PASSWORD :'app_password';
 
 GRANT CONNECT ON DATABASE docuask TO docuask_app;
 GRANT USAGE ON SCHEMA public TO docuask_app;

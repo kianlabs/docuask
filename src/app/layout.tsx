@@ -1,32 +1,56 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { SITE, SITE_URL } from "@/lib/site";
 import "./globals.css";
-
-const heading = Plus_Jakarta_Sans({
-  subsets: ["latin", "latin-ext"],
-  weight: ["600", "700"],
-  variable: "--font-heading",
-  display: "swap",
-});
-
-const body = IBM_Plex_Sans({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "500"],
-  variable: "--font-sans",
-  display: "swap",
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400"],
-  variable: "--font-mono",
-  display: "swap",
-});
+import "./fonts.css";
 
 export const metadata: Metadata = {
-  title: "DocuAsk — tanya apa pun ke dokumenmu",
-  description:
-    "Upload PDF, tanya apa pun, dapat jawaban dengan sitasi halaman. RAG untuk dokumen kamu.",
+  // Resolves relative OG/canonical URLs to absolute ones.
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE.title,
+    template: `%s · ${SITE.name}`,
+  },
+  description: SITE.description,
+  applicationName: SITE.name,
+  keywords: [
+    "tanya jawab PDF",
+    "RAG dokumen",
+    "chat dengan dokumen",
+    "asisten dokumen AI",
+    "cari jawaban di PDF",
+    "knowledge base perusahaan",
+  ],
+  authors: [{ name: SITE.name, url: SITE_URL }],
+  creator: SITE.name,
+  publisher: SITE.name,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: SITE.locale,
+    url: SITE_URL,
+    siteName: SITE.name,
+    title: SITE.title,
+    description: SITE.tagline,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE.title,
+    description: SITE.tagline,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icon.svg" }],
+  },
 };
 
 export default function RootLayout({
@@ -35,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className={`${heading.variable} ${body.variable} ${mono.variable}`}>
+    <html lang="id">
       <body className="min-h-screen bg-canvas font-sans text-[15px] leading-relaxed text-ink antialiased">
         {children}
       </body>

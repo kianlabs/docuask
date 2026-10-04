@@ -1,6 +1,36 @@
 # DocuAsk — Status
 
-**v0.5 — restrukturisasi UI (landing `/` + workspace `/app`, tema terang) + auth sesi untuk aplikasi web + akun self-service + order flow + multi-tenant + bge-m3 + Postgres/pgvector + billing. Terverifikasi 2026-10-04.**
+**v0.6 — production-ready + siap promosi: Docker/Compose + Vercel, health check & fail-fast env, security headers, SEO (robots/sitemap/OG/JSON-LD), halaman legal, self-hosted fonts, materi launch. Terverifikasi 2026-10-04.**
+
+## Produksi & rilis (v0.6)
+
+| Area | Isi |
+|---|---|
+| Health | `GET /api/health` — cek DB (`SELECT 1`) + env; `200` sehat / `503`; detail config hanya dengan `ADMIN_TOKEN` |
+| Fail-fast | `src/instrumentation.ts` + `src/lib/env.ts` — prod tanpa `DATABASE_URL` → `process.exit(1)` (orchestrator restart), dev hanya warn |
+| Container | `Dockerfile` multi-stage (`output: "standalone"`, non-root uid 1001, `HEALTHCHECK`); `docker-compose.yml` (pgvector + `migrate` one-shot + `app`) |
+| Deploy | `DEPLOY.md` (Docker + Vercel), `.env.example`; CI `.github/workflows/ci.yml` (tsc + lint + build di Postgres nyata) |
+| Headers | `next.config.js`: HSTS, `nosniff`, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy, COOP |
+| Error UI | `not-found.tsx`, `error.tsx`, `global-error.tsx` (tampilkan `digest` saja, bukan `message`) |
+| SEO | `robots.ts`, `sitemap.ts`, `opengraph-image.tsx` (1200×630 dari token), JSON-LD (`SoftwareApplication`+`Organization`+`FAQPage`), canonical/OG absolut dari `NEXT_PUBLIC_SITE_URL` |
+| Legal | `/privacy`, `/terms` (Bahasa Indonesia) |
+| Font | Self-hosted di `public/fonts` (latin + latin-ext) — build tak bergantung `fonts.googleapis.com` |
+| Launch | `LAUNCH.md` (tagline, pos LinkedIn/X/IG/TikTok/komunitas/email, checklist rilis) |
+
+### Verifikasi v0.6 (fresh)
+
+| Cek | Hasil |
+|---|---|
+| `npx tsc --noEmit` | exit 0 |
+| `CI=1 npx next lint` | No ESLint warnings or errors |
+| `next build` (terisolasi `/tmp`) | exit 0, **25 rute**, ~17 dtk (font lokal) |
+| Standalone (Docker runtime) | `/api/health` 200; font `font/woff2` 200; OG image 200 |
+| Fail-fast prod tanpa `DATABASE_URL` | **exit 1** (bukan hang/124) |
+| Rute | `/`,`/privacy`,`/terms`,`/login`,`/signup`,`/robots.txt`,`/sitemap.xml`,`/opengraph-image`,`/icon.svg` → 200; rute tak ada → 404 |
+| `og:image` di landing | ada (sebelumnya hilang karena override `openGraph`) |
+| Security headers | HSTS/nosniff/DENY/Referrer/Permissions/COOP semua muncul |
+| Idempotensi migrasi | `schema`,`billing`,`accounts`,`roles` — 2× run OK (roles tanpa `DROP ROLE`) |
+| E2E RAG | tenant 16 → tanya "jatah cuti" → "18 hari" + sitasi hlm. 1 |
 
 ## UI & sesi (v0.5)
 

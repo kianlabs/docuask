@@ -1,0 +1,91 @@
+# DocuAsk — self-hosted stack (app + Postgres/pgvector).
+#
+# Quick start:
+#   cp .env.example .env          # then fill the values below
+#   docker compose up -d --build
+#   open http://localhost:3000
+#
+# Compose reads `.env` (not `.env.local`) for the ${VARS} below. Minimum to set:
+#   POSTGRES_PASSWORD       superuser password for the bundled database
+#   DOCUASK_APP_PASSWORD    password for the NON-superuser app role (RLS needs it)
+#   SESSION_SECRET          signs login cookies (openssl rand -hex 32)
+#   ADMIN_TOKEN             protects /admin (openssl rand -hex 32)
+#   LLM_BASE_URL / LLM_MODEL / LLM_API_KEY
+#   CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN  (semantic embeddings)
+
+services:
+  db:
+    image: pgvector/pgvector:pg18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: docuask
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: docuask
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docuask -d docuask"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    # Not published by default: only the app needs to reach it. Uncomment to
+    # connect from the host with psql (e.g. for debugging).
+    # ports:
+    #   - "127.0.0.1:5433:5432"
+
+  # One-shot schema migration. Idempotent (IF NOT EXISTS / ON CONFLICT), so it
+  # is safe to run on every `up`. Runs as the superuser to create the schema and
+  # the ordinary app role; the app itself never connects as a superuser.
+  migrate:
+    image: pgvector/pgvector:pg18
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - ./sql:/sql:ro
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        echo "[migrate] applying schema…"
+        psql -h db -U docuask -d docuask -v ON_ERROR_STOP=1 -f /sql/schema.sql
+        psql -h db -U docuask -d docuask -v ON_ERROR_STOP=1 -f /sql/billing.sql
+        psql -h db -U docuask -d docuask -v ON_ERROR_STOP=1 -f /sql/accounts.sql
+        echo "[migrate] provisioning app role…"
+        psql -h db -U docuask -d docuask -v ON_ERROR_STOP=1 \
+          -v app_password="${DOCUASK_APP_PASSWORD:?set DOCUASK_APP_PASSWORD in .env}" \
+          -f /sql/roles.sql
+        echo "[migrate] done."
+    restart: "no"
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      # App connects as the ordinary role — superusers bypass RLS.
+      DATABASE_URL: postgres://docuask_app:${DOCUASK_APP_PASSWORD:?set DOCUASK_APP_PASSWORD in .env}@db:5432/docuask
+      EMBED_PROVIDER: ${EMBED_PROVIDER:-cloudflare}
+      CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?set ADMIN_TOKEN in .env}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:

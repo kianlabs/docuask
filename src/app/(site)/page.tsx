@@ -1,7 +1,25 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, Icon, LinkButton } from "@/components/ui";
+import { JsonLdGraph } from "@/components/JsonLd";
+import { SITE, SITE_URL } from "@/lib/site";
 
 /* Public marketing landing page — no API key, no internal jargon. */
+
+export const metadata: Metadata = {
+  title: SITE.title,
+  description: SITE.description,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    title: SITE.title,
+    description: SITE.tagline,
+    // Overriding `openGraph` here drops the file-based image from layout.tsx,
+    // so point at it explicitly (resolved against metadataBase).
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: SITE.title }],
+  },
+};
 
 const STEPS = [
   {
@@ -22,11 +40,11 @@ const STEPS = [
 ];
 
 const SAMPLE = {
-  q: "Berapa lama jatah cuti tahunan dan kapan harus diajukan?",
-  a: "Karyawan mendapat 12 hari cuti tahunan. Pengajuan dilakukan minimal 7 hari sebelum tanggal cuti melalui atasan langsung.",
+  q: "Berapa jatah cuti tahunan dan tunjangan kesehatannya?",
+  a: "Karyawan tetap mendapat 18 hari cuti tahunan berbayar dan tunjangan kesehatan Rp 750.000 per bulan.",
   cites: [
-    { file: "kebijakan-cuti.pdf", page: 3 },
-    { file: "kebijakan-cuti.pdf", page: 5 },
+    { file: "kebijakan-cuti-contoh.pdf", page: 1 },
+    { file: "kebijakan-cuti-contoh.pdf", page: 2 },
   ],
 };
 
@@ -82,32 +100,66 @@ const FAQ = [
   },
 ];
 
+const STRUCTURED_DATA = [
+  {
+    "@type": "SoftwareApplication",
+    name: SITE.name,
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    url: SITE_URL,
+    description: SITE.description,
+    inLanguage: "id",
+    offers: [
+      { "@type": "Offer", name: "Gratis", price: "0", priceCurrency: "IDR" },
+      { "@type": "Offer", name: "Pro", price: "99000", priceCurrency: "IDR" },
+      { "@type": "Offer", name: "Bisnis", price: "499000", priceCurrency: "IDR" },
+    ],
+  },
+  {
+    "@type": "Organization",
+    name: SITE.name,
+    url: SITE_URL,
+    email: SITE.email,
+  },
+  {
+    "@type": "FAQPage",
+    mainEntity: FAQ.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  },
+];
+
 export default function LandingPage() {
   return (
     <div className="mx-auto max-w-[960px] px-4">
+      <JsonLdGraph nodes={STRUCTURED_DATA} />
+
       {/* Hero */}
       <section className="grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
         <div>
           <Badge tone="accent" className="mb-4">
-            <Icon name="search" className="h-3.5 w-3.5" /> Didukung AI
+            <Icon name="file" className="h-3.5 w-3.5" /> Jawaban bersitasi halaman
           </Badge>
           <h1 className="font-heading text-display font-bold text-ink">
             Tanya apa pun ke dokumenmu, dapat jawaban bersitasi.
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted">
-            Unggah PDF, ajukan pertanyaan, dan terima jawaban yang menunjuk
-            halaman sumbernya. Tanpa jargon, tanpa API key.
+            Unggah PDF — kebijakan, kontrak, SOP — lalu tanya dengan bahasa
+            sehari-hari. Setiap jawaban menunjuk halaman sumbernya, jadi bisa
+            kamu cek sendiri.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <LinkButton href="/signup" size="lg">
               Coba gratis
             </LinkButton>
             <LinkButton href="/app" variant="secondary" size="lg">
-              Buka aplikasi
+              Lihat aplikasi
             </LinkButton>
           </div>
           <p className="mt-3 text-xs text-muted">
-            Gratis selamanya untuk mulai · tanpa kartu kredit
+            Gratis untuk mulai · tanpa kartu kredit · jawaban hanya dari dokumenmu
           </p>
         </div>
 
@@ -160,6 +212,42 @@ export default function LandingPage() {
               <p className="mt-1 text-sm text-muted">{s.body}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Why it is trustworthy */}
+      <section className="border-t border-line py-16">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
+          Dibuat untuk jawaban yang bisa kamu cek.
+        </h2>
+        <div className="mt-10 grid gap-8 sm:grid-cols-3">
+          <div>
+            <h3 className="font-heading text-heading-3 font-semibold text-ink">
+              Anti-halusinasi
+            </h3>
+            <p className="mt-1 text-sm text-muted">
+              Kalau jawabannya tidak ada di dokumen, DocuAsk bilang tidak ada —
+              bukan mengarang. Jawaban hanya diambil dari berkas milikmu.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-heading text-heading-3 font-semibold text-ink">
+              Dokumen terpisah per akun
+            </h3>
+            <p className="mt-1 text-sm text-muted">
+              Setiap akun hanya bisa mengakses dokumennya sendiri, dijaga di
+              level basis data, bukan sekadar di tampilan.
+            </p>
+          </div>
+          <div>
+            <h3 className="font-heading text-heading-3 font-semibold text-ink">
+              Sumber selalu terlihat
+            </h3>
+            <p className="mt-1 text-sm text-muted">
+              Setiap kalimat menunjuk halaman asalnya. Kamu yang memutuskan
+              percaya atau tidak, bukan modelnya.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -240,6 +328,14 @@ export default function LandingPage() {
         </div>
         <p className="mt-8 text-xs text-muted">
           © {new Date().getFullYear()} DocuAsk ·{" "}
+          <Link href="/privacy" className="hover:text-ink">
+            Privasi
+          </Link>{" "}
+          ·{" "}
+          <Link href="/terms" className="hover:text-ink">
+            Ketentuan
+          </Link>{" "}
+          ·{" "}
           <Link href="/login" className="hover:text-ink">
             Masuk
           </Link>

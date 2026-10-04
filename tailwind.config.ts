@@ -25,9 +25,9 @@ const config: Config = {
         danger: { DEFAULT: "#b42318", soft: "#fef3f2" },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", "sans-serif"],
-        heading: ["var(--font-heading)", "sans-serif"],
-        mono: ["var(--font-mono)", "monospace"],
+        sans: ["IBM Plex Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        heading: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       fontSize: {
         display: ["36px", { lineHeight: "1.1", letterSpacing: "-0.75px" }],

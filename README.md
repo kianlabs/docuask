@@ -3,6 +3,24 @@
 Upload a PDF, ask questions, get **answers with page citations**. Multi-tenant
 retrieval-augmented generation (RAG).
 
+[![CI](https://github.com/kianlabs/docuask/actions/workflows/ci.yml/badge.svg)](https://github.com/kianlabs/docuask/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+![Node](https://img.shields.io/badge/node-22-3c873a)
+
+**Production-ready:** Docker + Compose, health check, security headers, env
+validation, CI. See [`DEPLOY.md`](./DEPLOY.md) to ship it.
+
+## How it works
+
+```
+PDF ──▶ extract text ──▶ chunk ──▶ embed ──▶ pgvector (HNSW)
+                                                  │
+question ──▶ embed ──▶ nearest chunks ──▶ LLM (grounded prompt) ──▶ answer + [page N]
+```
+
+Two anti-hallucination guards: a **retrieval floor** (below it the LLM is never
+called) and a **grounded prompt** (the model may only use retrieved context).
+
 ## Stack
 
 - **Next.js 14** (App Router) + TypeScript + Tailwind
@@ -13,6 +31,19 @@ retrieval-augmented generation (RAG).
 - **Multi-tenant + Row-Level Security** — isolation enforced in the database
 
 ## Quick start
+
+### Docker Compose (fastest)
+
+```bash
+cp .env.example .env      # fill POSTGRES_PASSWORD, DOCUASK_APP_PASSWORD, secrets, LLM
+docker compose up -d --build
+curl -fsS http://localhost:3000/api/health   # {"ok":true,...}
+```
+
+Compose brings up Postgres/pgvector, applies the schema, and starts the app.
+Full production notes (TLS, scaling, Vercel) are in [`DEPLOY.md`](./DEPLOY.md).
+
+### Local dev
 
 ```bash
 # 1. Database (pgvector). Replace the password before any real use.
@@ -28,7 +59,7 @@ export DOCUASK_APP_PASSWORD=change_me_app_pw
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/schema.sql
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/billing.sql
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/accounts.sql
-docker exec -i docuask-pg psql -U docuask -d docuask \
+docker exec -i docuask-pg psql -U docuask \
   -v app_password="$DOCUASK_APP_PASSWORD" -f - < sql/roles.sql
 
 # 3. Config
@@ -42,8 +73,22 @@ npx next dev -p 3005     # open http://localhost:3005/app (sign up, upload, ask)
 The app-role password (`DOCUASK_APP_PASSWORD`) must match the one embedded in
 `DATABASE_URL`. Use a real secret in production.
 
-Nodes 22 LTS is required if you use `better-sqlite3`; with Postgres any recent
-LTS works. Pin with `.node-version`.
+Node 22 LTS is pinned in `.node-version`.
+
+## Operations
+
+| Concern | Where |
+|---|---|
+| Health / readiness probe | `GET /api/health` → `200` when the DB answers, else `503` |
+| Boot-time config check | `src/lib/env.ts` + `src/instrumentation.ts` (fails fast in prod) |
+| Security headers | `next.config.js` (`headers()`), HSTS + `nosniff` + `DENY` framing |
+| Errors | `src/app/error.tsx`, `global-error.tsx`, `not-found.tsx` |
+| Container | `Dockerfile` (multi-stage, `output: "standalone"`, non-root) |
+| Deploy | [`DEPLOY.md`](./DEPLOY.md) — Docker + Vercel |
+| CI | `.github/workflows/ci.yml` — typecheck, lint, build on a real Postgres |
+
+The rate limiter (`src/lib/ratelimit.ts`) is in-memory and **per-process**; move
+it to a shared store before running more than one replica.
 
 ## Sample document
 
@@ -88,6 +133,7 @@ curl -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
 
 | Method | Path | Description |
 |---|---|---|
+| `GET`  | `/api/health` | readiness probe: `200` if the DB answers, else `503` |
 | `POST` | `/api/ingest` | multipart `file` (PDF) → extract, chunk, embed, store |
 | `GET`  | `/api/ingest` | list this tenant's documents |
 | `POST` | `/api/chat`   | `{question, documentId?, k?}` → answer + citations |
@@ -114,11 +160,22 @@ endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
 
 ## Pages
 
-- `/` — landing page (value prop, sample Q&A, pricing).
+- `/` — landing page (value prop, sample Q&A, pricing, FAQ, trust section).
 - `/app` — the workspace: sign in, upload PDFs, ask questions, get cited
   answers. Requires a session (redirects to `/login` otherwise).
 - `/account` — usage, plan comparison, orders, and the API key (for scripts).
 - `/login`, `/signup`, `/admin`.
+- `/privacy`, `/terms` — legal pages (Indonesian).
+
+### SEO
+
+- `robots.txt` + `sitemap.xml` are generated from `src/lib/site.ts`
+  (`/api`, `/app`, `/account`, `/admin` are disallowed and `noindex`).
+- OpenGraph/Twitter cards via `src/app/opengraph-image.tsx` (rendered from the
+  design tokens, no stale PNG).
+- JSON-LD: `SoftwareApplication` + `Organization` + `FAQPage` on the landing.
+- Set `NEXT_PUBLIC_SITE_URL` to your public origin so canonical/OG URLs are
+  absolute (falls back to the Vercel URL, then `localhost:3005`).
 
 ## Billing
 

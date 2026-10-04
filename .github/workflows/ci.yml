@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel an in-flight run when the same branch is pushed again.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg18
+        env:
+          POSTGRES_USER: docuask
+          POSTGRES_PASSWORD: ci_pw
+          POSTGRES_DB: docuask
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U docuask -d docuask"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://docuask:ci_pw@127.0.0.1:5432/docuask
+      # Deterministic, offline-safe config: no external LLM/embed calls in CI.
+      EMBED_PROVIDER: hash
+      LLM_BASE_URL: http://127.0.0.1:9/v1
+      LLM_MODEL: ci-model
+      SESSION_SECRET: ci_session_secret_not_a_real_secret
+      ADMIN_TOKEN: ci_admin_token_not_a_real_secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Apply database schema
+        run: |
+          PGPASSWORD=ci_pw psql -h 127.0.0.1 -U docuask -d docuask -v ON_ERROR_STOP=1 -f sql/schema.sql
+          PGPASSWORD=ci_pw psql -h 127.0.0.1 -U docuask -d docuask -v ON_ERROR_STOP=1 -f sql/billing.sql
+          PGPASSWORD=ci_pw psql -h 127.0.0.1 -U docuask -d docuask -v ON_ERROR_STOP=1 -f sql/accounts.sql
+
+      - name: Build
+        run: npm run build
