@@ -363,7 +363,7 @@ export default function AppPage() {
                     onClick={() => setConfirmId(d.id)}
                     aria-label={`Hapus ${d.filename}`}
                     title="Hapus dokumen"
-                    className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-md text-muted opacity-100 transition-opacity hover:bg-danger-soft hover:text-danger focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+                    className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-md text-muted opacity-0 transition-opacity hover:bg-danger-soft hover:text-danger focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
                   >
                     <Icon name="trash" className="h-4 w-4" />
                   </button>
