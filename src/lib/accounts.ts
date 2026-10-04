@@ -113,7 +113,10 @@ export function verifyLogin(password: string, storedHash: string): boolean {
 
 /** Resolve a tenant by id (tenants has no RLS). */
 export async function getTenantById(tenantId: number): Promise<TenantRow | null> {
-  const res = await pool().query<TenantRow>(`SELECT * FROM tenants WHERE id = $1`, [tenantId]);
+  const res = await pool().query<TenantRow>(
+    `SELECT * FROM tenants WHERE id = $1 AND is_active = true`,
+    [tenantId]
+  );
   return res.rows[0] ?? null;
 }
 

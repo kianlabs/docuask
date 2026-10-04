@@ -8,6 +8,7 @@ import { serverError, badRequest } from "@/lib/http";
 import { rateLimit } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {

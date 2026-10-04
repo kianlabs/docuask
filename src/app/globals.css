@@ -3,9 +3,48 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: #0b0c0e;
+  background: theme("colors.canvas");
+  color: theme("colors.ink");
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Accessible, consistent focus ring across the app. */
+:focus-visible {
+  outline: 2px solid theme("colors.accent.DEFAULT");
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: theme("colors.accent.soft");
+  color: theme("colors.accent.hover");
+}
+
+/* Subtle scrollbars that match the light canvas. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: theme("colors.line-strong") transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: theme("colors.line-strong");
+  border-radius: 9999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: theme("colors.faint");
+  background-clip: content-box;
 }

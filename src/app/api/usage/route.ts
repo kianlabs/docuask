@@ -4,6 +4,7 @@ import { getUsage, getPlans, upgradePlan } from "@/lib/billing";
 import { serverError, badRequest } from "@/lib/http";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /** GET /api/usage — this tenant's plan, usage, and remaining quota. */
 export async function GET(req: NextRequest) {
