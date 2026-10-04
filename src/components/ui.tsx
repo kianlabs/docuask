@@ -14,10 +14,10 @@ type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary:
-    "bg-accent text-white hover:bg-accent-hover shadow-card disabled:hover:bg-accent",
+    "bg-primary text-on-primary hover:bg-accent-hover shadow-card disabled:hover:bg-primary",
   secondary:
     "bg-surface text-ink border border-line-strong hover:bg-sunken disabled:hover:bg-surface",
-  ghost: "bg-transparent text-muted hover:bg-sunken hover:text-ink",
+  ghost: "bg-canvas text-muted hover:bg-sunken hover:text-ink",
   danger:
     "bg-surface text-danger border border-line-strong hover:bg-danger-soft disabled:hover:bg-surface",
 };
@@ -110,7 +110,7 @@ export function Input({
 }: React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
-      className={`w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ring ${className}`}
+      className={`w-full rounded-lg border border-line-strong bg-surface px-3 py-2 text-sm text-ink placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent-ring ${className}`}
       {...rest}
     />
   );
@@ -129,7 +129,7 @@ export function Field({
     <label className="block">
       <span className="mb-1.5 block text-xs font-medium text-muted">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-faint">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-muted">{hint}</span>}
     </label>
   );
 }
@@ -174,7 +174,7 @@ export function QuotaBar({
     <div>
       <div className="mb-1.5 flex items-baseline justify-between text-xs">
         <span className="font-medium text-muted">{label}</span>
-        <span className={near ? "font-medium text-warning" : "text-faint"}>
+        <span className={near ? "font-medium text-warning" : "text-muted"}>
           {used}
           {unlimited ? " · tak terbatas" : ` / ${max}`}
         </span>
@@ -206,7 +206,7 @@ export function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-line-strong bg-surface/60 px-6 py-10 text-center">
-      {icon && <div className="mb-3 text-faint">{icon}</div>}
+      {icon && <div className="mb-3 text-muted">{icon}</div>}
       <p className="text-sm font-medium text-ink">{title}</p>
       {description && (
         <p className="mt-1 max-w-sm text-xs text-muted">{description}</p>
@@ -245,7 +245,7 @@ export function LinkButton({
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <span className={`inline-flex items-center gap-2 font-semibold text-ink ${className}`}>
+    <span className={`inline-flex items-center gap-2 font-heading font-bold tracking-tight text-ink ${className}`}>
       <span className="grid h-6 w-6 place-items-center rounded-md bg-accent text-white">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
@@ -338,9 +338,9 @@ export function Icon({ name, className = "h-4 w-4" }: { name: string; className?
 export function Dots({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1 ${className}`} role="status" aria-label="Memproses">
-      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-faint [animation-delay:0ms]" />
-      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-faint [animation-delay:200ms]" />
-      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-faint [animation-delay:400ms]" />
+      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-muted [animation-delay:0ms]" />
+      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-muted [animation-delay:200ms]" />
+      <span className="h-1.5 w-1.5 animate-blink rounded-full bg-muted [animation-delay:400ms]" />
     </span>
   );
 }

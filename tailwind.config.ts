@@ -5,52 +5,39 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Light, "workspace" palette (Linear/Notion flavour).
-        canvas: "#f7f7f8", // page background
-        surface: "#ffffff", // cards, panels
-        sunken: "#f1f2f4", // inset areas (inputs, code)
-        line: "#e6e7eb", // default border
-        "line-strong": "#d5d7dd", // emphasised border
-        ink: "#17181c", // primary text
-        muted: "#63676f", // secondary text
-        faint: "#9aa0a9", // tertiary text / hints
+        primary: "#1a7578",
+        "on-primary": "#ffffff",
+        canvas: "#f7f6f3",
+        surface: "#ffffff",
+        sunken: "#f0eeea",
+        line: "#e3dfda",
+        "line-strong": "#d2cec8",
+        ink: "#1a1a1e",
+        muted: "#64696f",
         accent: {
-          DEFAULT: "#4f46e5", // indigo-600
-          hover: "#4338ca", // indigo-700
-          soft: "#eef0ff", // tinted background
-          ring: "#c7c9f7",
+          DEFAULT: "#1a7578",
+          hover: "#146264",
+          soft: "#e7f4f4",
+          ring: "#a3d5d6",
         },
         positive: { DEFAULT: "#067647", soft: "#ecfdf3" },
         warning: { DEFAULT: "#b54708", soft: "#fffaeb" },
         danger: { DEFAULT: "#b42318", soft: "#fef3f2" },
       },
       fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "Segoe UI",
-          "Inter",
-          "Roboto",
-          "Helvetica Neue",
-          "Arial",
-          "sans-serif",
-        ],
-        mono: [
-          "ui-monospace",
-          "SFMono-Regular",
-          "Menlo",
-          "Monaco",
-          "Consolas",
-          "monospace",
-        ],
+        sans: ["var(--font-sans)", "sans-serif"],
+        heading: ["var(--font-heading)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
+      },
+      fontSize: {
+        display: ["36px", { lineHeight: "1.1", letterSpacing: "-0.75px", fontWeight: "700" }],
+        "heading-1": ["28px", { lineHeight: "1.2", letterSpacing: "-0.5px", fontWeight: "700" }],
+        "heading-2": ["22px", { lineHeight: "1.25", letterSpacing: "-0.3px", fontWeight: "600" }],
+        "heading-3": ["18px", { lineHeight: "1.3", letterSpacing: "-0.1px", fontWeight: "600" }],
       },
       boxShadow: {
-        card: "0 1px 2px 0 rgb(16 24 40 / 0.04), 0 1px 3px 0 rgb(16 24 40 / 0.06)",
-        pop: "0 8px 24px -6px rgb(16 24 40 / 0.14), 0 2px 6px -2px rgb(16 24 40 / 0.08)",
-      },
-      borderRadius: {
-        xl: "0.75rem",
-        "2xl": "1rem",
+        card: "0 1px 2px 0 rgba(26,26,30,0.04), 0 1px 3px 0 rgba(26,26,30,0.06)",
+        pop: "0 8px 24px -6px rgba(26,26,30,0.14), 0 2px 6px -2px rgba(26,26,30,0.08)",
       },
       keyframes: {
         "fade-up": {

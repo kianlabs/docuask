@@ -36,7 +36,7 @@ export default function SignupPage() {
   return (
     <div className="mx-auto max-w-md px-4 py-16">
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold text-ink">Buat akun gratis</h1>
+        <h1 className="text-2xl font-semibold text-ink font-heading">Buat akun gratis</h1>
         <p className="mt-1 text-sm text-muted">
           Mulai bertanya ke dokumenmu dalam hitungan menit.
         </p>

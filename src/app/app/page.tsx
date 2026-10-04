@@ -292,7 +292,7 @@ export default function AppPage() {
                     <Icon name="file" className="mt-0.5 h-4 w-4 shrink-0" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate">{d.filename}</span>
-                      <span className="block text-[11px] text-faint">
+                      <span className="block text-[11px] text-muted">
                         {d.pages} hal · {d.chunks} bagian
                       </span>
                     </span>
@@ -301,7 +301,7 @@ export default function AppPage() {
               ))}
             </ul>
           ) : (
-            <p className="px-3 py-6 text-center text-xs text-faint">
+            <p className="px-3 py-6 text-center text-xs text-muted">
               Belum ada dokumen. Unggah PDF untuk mulai.
             </p>
           )}
@@ -369,7 +369,7 @@ export default function AppPage() {
               {hasDocs ? (
                 <>
                   <div className="mb-6 text-center">
-                    <h2 className="text-lg font-semibold text-ink">
+                    <h2 className="font-heading text-lg font-semibold text-ink">
                       Tanya apa pun tentang dokumenmu
                     </h2>
                     <p className="mt-1 text-sm text-muted">
@@ -394,7 +394,7 @@ export default function AppPage() {
                   title="Mulai dengan mengunggah dokumen"
                   description="Tarik PDF ke panel kiri (atau tombol unggah di ponsel). Setelah itu kamu bisa langsung bertanya."
                 >
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-hover">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:bg-accent-hover">
                     <Icon name="upload" className="h-4 w-4" />
                     Unggah PDF
                     <input
@@ -415,7 +415,7 @@ export default function AppPage() {
               {messages.map((m) =>
                 m.role === "user" ? (
                   <div key={m.id} className="flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-accent px-4 py-2.5 text-sm text-white">
+                    <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-sunken px-4 py-2.5 text-sm text-ink">
                       {m.text}
                     </div>
                   </div>
@@ -481,12 +481,12 @@ export default function AppPage() {
           <div className="mx-auto mt-2 flex max-w-2xl items-center justify-between">
             <button
               onClick={() => setShowDiag((v) => !v)}
-              className="text-[11px] text-faint hover:text-muted"
+              className="text-[11px] text-muted hover:text-ink"
             >
               {showDiag ? "Sembunyikan diagnostik" : "Diagnostik"}
             </button>
             {showDiag && diag && (
-              <p className="font-mono text-[11px] text-faint">
+              <p className="font-mono text-[11px] text-muted">
                 embed: {diag.embed?.provider ?? "?"}
                 {diag.embed?.dims ? ` (${diag.embed.dims}d)` : ""} · tenant:{" "}
                 {diag.tenantName ?? "—"}
@@ -557,7 +557,7 @@ function Answer({
       {/* Source cards */}
       {cites.length > 0 && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs font-medium text-faint">
+          <p className="text-xs font-medium text-muted">
             Sumber ({cites.length})
           </p>
           {cites.map((c, i) => (
@@ -570,10 +570,10 @@ function Answer({
                 <span className="grid h-4 w-4 place-items-center rounded bg-accent-soft text-[10px] font-semibold text-accent-hover">
                   {i + 1}
                 </span>
-                <Icon name="file" className="h-3.5 w-3.5 text-faint" />
+                <Icon name="file" className="h-3.5 w-3.5 text-muted" />
                 <span className="truncate font-medium text-ink">{c.filename}</span>
-                <span className="text-faint">hlm. {c.page}</span>
-                <span className="ml-auto text-faint">{Math.round(c.score * 100)}%</span>
+                <span className="text-muted">hlm. {c.page}</span>
+                <span className="ml-auto text-muted">{Math.round(c.score * 100)}%</span>
               </div>
               <p className="mt-1.5 line-clamp-3 text-xs text-muted">{c.snippet}</p>
             </div>

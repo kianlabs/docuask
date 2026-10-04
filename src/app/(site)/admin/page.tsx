@@ -94,7 +94,7 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="text-2xl font-semibold text-ink">Admin</h1>
+      <h1 className="text-2xl font-semibold text-ink font-heading">Admin</h1>
       <p className="mt-1 text-sm text-muted">
         Semua tenant, paket, dan pemakaian bulan ini.
       </p>

@@ -91,7 +91,7 @@ export default function LandingPage() {
           <Badge tone="accent" className="mb-4">
             <Icon name="spark" className="h-3.5 w-3.5" /> Didukung AI
           </Badge>
-          <h1 className="text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
+          <h1 className="font-heading text-4xl font-semibold leading-tight tracking-tight text-ink sm:text-5xl">
             Tanya apa pun ke dokumenmu, dapat jawaban bersitasi.
           </h1>
           <p className="mt-4 max-w-xl text-base text-muted">
@@ -106,7 +106,7 @@ export default function LandingPage() {
               Buka aplikasi
             </LinkButton>
           </div>
-          <p className="mt-3 text-xs text-faint">
+          <p className="mt-3 text-xs text-muted">
             Gratis selamanya untuk mulai · tanpa kartu kredit
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function LandingPage() {
         {/* Sample answer card */}
         <Card className="p-5">
           <div className="rounded-lg bg-sunken px-3 py-2 text-sm text-ink">
-            <span className="mr-2 text-faint">Kamu</span>
+            <span className="mr-2 text-muted">Kamu</span>
             {SAMPLE.q}
           </div>
           <div className="mt-3">
@@ -147,7 +147,7 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section className="border-t border-line py-16">
-        <h2 className="text-center text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-center text-2xl font-semibold text-ink">
           Tiga langkah, selesai.
         </h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -166,7 +166,7 @@ export default function LandingPage() {
       {/* Pricing — Good / Better / Best */}
       <section id="harga" className="scroll-mt-20 border-t border-line py-16">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-ink">Harga yang sederhana</h2>
+          <h2 className="font-heading text-2xl font-semibold text-ink">Harga yang sederhana</h2>
           <p className="mt-2 text-sm text-muted">
             Mulai gratis, tingkatkan saat butuh. Batalkan kapan saja.
           </p>
@@ -188,7 +188,7 @@ export default function LandingPage() {
               <p className="mt-0.5 text-xs text-muted">{p.tagline}</p>
               <div className="mt-4 flex items-baseline gap-1">
                 <span className="text-3xl font-semibold text-ink">{p.price}</span>
-                <span className="text-sm text-faint">/bulan</span>
+                <span className="text-sm text-muted">/bulan</span>
               </div>
               <ul className="mt-5 flex-1 space-y-2.5">
                 {p.features.map((f) => (
@@ -212,7 +212,7 @@ export default function LandingPage() {
 
       {/* FAQ */}
       <section className="border-t border-line py-16">
-        <h2 className="text-center text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-center text-2xl font-semibold text-ink">
           Pertanyaan umum
         </h2>
         <div className="mx-auto mt-8 max-w-2xl divide-y divide-line rounded-xl border border-line bg-surface">
@@ -220,7 +220,7 @@ export default function LandingPage() {
             <details key={f.q} className="group px-5 py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-ink">
                 {f.q}
-                <span className="text-faint transition-transform group-open:rotate-45">+</span>
+                <span className="text-muted transition-transform group-open:rotate-45">+</span>
               </summary>
               <p className="mt-2 text-sm text-muted">{f.a}</p>
             </details>
@@ -230,7 +230,7 @@ export default function LandingPage() {
 
       {/* Footer CTA */}
       <section className="border-t border-line py-16 text-center">
-        <h2 className="text-2xl font-semibold text-ink">
+        <h2 className="font-heading text-2xl font-semibold text-ink">
           Siap bertanya ke dokumenmu?
         </h2>
         <div className="mt-6 flex justify-center gap-3">
@@ -238,9 +238,9 @@ export default function LandingPage() {
             Coba gratis
           </LinkButton>
         </div>
-        <p className="mt-8 text-xs text-faint">
+        <p className="mt-8 text-xs text-muted">
           © {new Date().getFullYear()} DocuAsk ·{" "}
-          <Link href="/login" className="hover:text-muted">
+          <Link href="/login" className="hover:text-ink">
             Masuk
           </Link>
         </p>

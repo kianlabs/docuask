@@ -47,7 +47,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-surface/80 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-line bg-surface">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="shrink-0" aria-label="DocuAsk — beranda">
           <Logo />

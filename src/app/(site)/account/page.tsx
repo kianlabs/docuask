@@ -185,7 +185,7 @@ export default function AccountPage() {
       {/* Header */}
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">Dasbor akun</h1>
+          <h1 className="text-2xl font-semibold font-heading text-ink">Dasbor akun</h1>
           <p className="mt-0.5 text-sm text-muted">{acct.email}</p>
         </div>
         <Link
@@ -259,7 +259,7 @@ export default function AccountPage() {
                       ? "Rp 0"
                       : "Rp " + p.price_idr.toLocaleString("id-ID")}
                   </span>
-                  <span className="text-xs text-faint">/bulan</span>
+                  <span className="text-xs text-muted">/bulan</span>
                 </div>
                 <p className="mt-3 flex-1 text-xs text-muted">
                   {p.max_documents === null ? "∞" : p.max_documents} dokumen ·{" "}
@@ -382,7 +382,7 @@ export default function AccountPage() {
           <code className="mt-3 block break-all rounded-lg border border-line bg-sunken px-3 py-2 font-mono text-xs text-ink">
             {showKey ? acct.apiKey : "•".repeat(32)}
           </code>
-          <p className="mt-2 text-xs text-faint">
+          <p className="mt-2 text-xs text-muted">
             Pakai sebagai header{" "}
             <code className="rounded bg-sunken px-1 py-0.5 font-mono text-ink">x-api-key</code>{" "}
             pada panggilan API.
