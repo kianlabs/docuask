@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge, Card, Icon, LinkButton } from "@/components/ui";
 import { JsonLdGraph } from "@/components/JsonLd";
 import { DemoAsk } from "@/components/DemoAsk";
+import { Testimonials } from "@/components/Testimonials";
 import { SITE, SITE_URL } from "@/lib/site";
 
 /* Public marketing landing page — no API key, no internal jargon. */
@@ -445,6 +446,9 @@ export default function LandingPage() {
           ))}
         </div>
       </section>
+
+      {/* Illustrative user scenarios — explicitly labelled, not real users. */}
+      <Testimonials />
 
       {/* Pricing — Good / Better / Best */}
       <section id="harga" className="scroll-mt-20 border-t border-line py-16">
