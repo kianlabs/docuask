@@ -79,6 +79,12 @@ export function SiteHeader() {
           >
             Harga
           </a>
+          <Link
+            href="/security"
+            className="hidden rounded-lg px-3 py-1.5 text-sm text-muted hover:bg-sunken hover:text-ink sm:block"
+          >
+            Keamanan
+          </Link>
 
           {!checked ? (
             <span className="h-8 w-24 animate-pulse rounded-lg bg-sunken" />
@@ -143,6 +149,12 @@ export function SiteHeader() {
                   >
                     Harga
                   </a>
+                  <Link
+                    href="/security"
+                    className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
+                  >
+                    Keamanan
+                  </Link>
                   {me && (
                     <Link
                       href="/account"

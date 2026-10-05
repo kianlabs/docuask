@@ -102,6 +102,19 @@ const FAQ = [
   },
 ];
 
+const COMPARE = [
+  { label: "Jawaban menunjuk halaman sumber", values: ["ya", "tidak", "tidak"] },
+  { label: "Hanya dari dokumenmu", values: ["ya", "ya", "tidak"] },
+  { label: "Jujur kalau jawaban tidak ada", values: ["ya", "—", "tidak"] },
+  { label: "Bisa tanya dengan bahasa sehari-hari", values: ["ya", "tidak", "ya"] },
+];
+
+const WORKSPACE_DOCS = [
+  { file: "kebijakan-cuti-contoh.pdf", meta: "2 hal · 6 bagian" },
+  { file: "kontrak-kerja-contoh.pdf", meta: "4 hal · 11 bagian" },
+  { file: "sop-onboarding-contoh.pdf", meta: "3 hal · 8 bagian" },
+];
+
 const STRUCTURED_DATA = [
   {
     "@type": "SoftwareApplication",
@@ -253,6 +266,125 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Comparison — honest, factual */}
+      <section className="border-t border-line py-16">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
+          Bandingkan dengan cara lain.
+        </h2>
+        <div className="mt-10">
+          <Card className="overflow-x-auto" data-motion>
+            <table className="w-full min-w-[560px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-line">
+                  <th scope="col" className="px-5 py-3 text-left">
+                    <span className="sr-only">Kemampuan</span>
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-5 py-3 text-center font-heading text-sm font-semibold text-ink"
+                  >
+                    DocuAsk
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-center text-sm font-medium text-muted">
+                    Ctrl+F di PDF
+                  </th>
+                  <th scope="col" className="px-5 py-3 text-center text-sm font-medium text-muted">
+                    Chatbot umum
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARE.map((row) => (
+                  <tr key={row.label} className="border-b border-line last:border-0">
+                    <th scope="row" className="px-5 py-3 text-left font-normal text-ink">
+                      {row.label}
+                    </th>
+                    {row.values.map((v, i) => (
+                      <td key={i} className="px-5 py-3 text-center">
+                        {v === "ya" ? (
+                          <Icon name="check" className="mx-auto h-4 w-4 text-positive" />
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        </div>
+      </section>
+
+      {/* Product tour — faithful static mock of the /app workspace */}
+      <section className="border-t border-line py-16">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
+          Beginilah ruang kerjanya.
+        </h2>
+        <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted" data-motion>
+          Dokumen di kiri, percakapan di kanan. Setiap jawaban menunjuk halaman sumbernya.
+        </p>
+        <Card className="mt-10 overflow-hidden" data-motion>
+          <div className="grid sm:grid-cols-[220px_1fr]">
+            {/* Document list */}
+            <div className="border-b border-line p-4 sm:border-b-0 sm:border-r">
+              <p className="px-1 text-xs font-medium text-muted">Dokumen</p>
+              <ul className="mt-2 space-y-1">
+                {WORKSPACE_DOCS.map((d, i) => (
+                  <li
+                    key={d.file}
+                    className={`flex items-start gap-2 rounded-lg px-3 py-2 text-sm ${
+                      i === 0 ? "bg-accent-soft font-medium text-accent-hover" : "text-muted"
+                    }`}
+                  >
+                    <Icon name="file" className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{d.file}</span>
+                      <span className="block text-body-sm text-muted">{d.meta}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* Conversation */}
+            <div className="bg-canvas p-4 sm:p-6">
+              <div className="mx-auto max-w-[520px] space-y-4">
+                <div className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl rounded-br-sm bg-sunken px-4 py-2.5 text-sm text-ink">
+                    {SAMPLE.q}
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
+                    <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
+                      <Icon name="file" className="h-3 w-3" />
+                    </span>
+                    DocuAsk
+                  </div>
+                  <p className="text-sm leading-relaxed text-ink">
+                    {SAMPLE.a}{" "}
+                    <sup className="text-xs font-semibold text-accent">[1]</sup>
+                    <sup className="text-xs font-semibold text-accent">[2]</sup>
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {SAMPLE.cites.map((c, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                      >
+                        <span className="font-medium text-accent">[{i + 1}]</span>
+                        <Icon name="file" className="h-3.5 w-3.5" />
+                        {c.file} · hlm. {c.page}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </section>
+
       {/* Pricing — Good / Better / Best */}
       <section id="harga" className="scroll-mt-20 border-t border-line py-16">
         <div className="text-center" data-motion>
@@ -337,6 +469,10 @@ export default function LandingPage() {
           ·{" "}
           <Link href="/terms" className="hover:text-ink">
             Ketentuan
+          </Link>{" "}
+          ·{" "}
+          <Link href="/security" className="hover:text-ink">
+            Keamanan
           </Link>{" "}
           ·{" "}
           <Link href="/login" className="hover:text-ink">
