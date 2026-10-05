@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, Icon, LinkButton } from "@/components/ui";
 import { JsonLdGraph } from "@/components/JsonLd";
+import { LandingMotion } from "@/components/LandingMotion";
 import { SITE, SITE_URL } from "@/lib/site";
 
 /* Public marketing landing page — no API key, no internal jargon. */
@@ -137,22 +138,23 @@ export default function LandingPage() {
   return (
     <div className="mx-auto max-w-[960px] px-4">
       <JsonLdGraph nodes={STRUCTURED_DATA} />
+      <LandingMotion />
 
       {/* Hero */}
       <section className="grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">
         <div>
-          <Badge tone="accent" className="mb-4">
+          <Badge tone="accent" className="mb-4" data-motion>
             <Icon name="file" className="h-3.5 w-3.5" /> Jawaban bersitasi halaman
           </Badge>
-          <h1 className="font-heading text-display font-bold text-ink">
+          <h1 className="font-heading text-display font-bold text-ink" data-motion>
             Tanya apa pun ke dokumenmu, dapat jawaban bersitasi.
           </h1>
-          <p className="mt-4 max-w-xl text-base text-muted">
+          <p className="mt-4 max-w-xl text-base text-muted" data-motion>
             Unggah PDF — kebijakan, kontrak, SOP — lalu tanya dengan bahasa
             sehari-hari. Setiap jawaban menunjuk halaman sumbernya, jadi bisa
             kamu cek sendiri.
           </p>
-          <div className="mt-7 flex flex-wrap items-center gap-3">
+          <div className="mt-7 flex flex-wrap items-center gap-3" data-motion>
             <LinkButton href="/signup" size="lg">
               Coba gratis
             </LinkButton>
@@ -160,13 +162,13 @@ export default function LandingPage() {
               Lihat aplikasi
             </LinkButton>
           </div>
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-3 text-xs text-muted" data-motion>
             Gratis untuk mulai · tanpa kartu kredit · jawaban hanya dari dokumenmu
           </p>
         </div>
 
         {/* Sample answer card */}
-        <Card className="rounded-2xl p-5">
+        <Card className="rounded-2xl p-5" data-motion>
           <div className="rounded-lg bg-sunken px-3 py-2 text-sm text-ink">
             <span className="mr-2 text-muted">Kamu</span>
             {SAMPLE.q}
@@ -201,12 +203,12 @@ export default function LandingPage() {
 
       {/* How it works */}
       <section className="border-t border-line py-16">
-        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
           Tiga langkah, selesai.
         </h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-3">
           {STEPS.map((s) => (
-            <div key={s.n}>
+            <div key={s.n} data-motion>
               <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent-soft font-semibold text-accent-hover">
                 {s.n}
               </div>
@@ -219,11 +221,11 @@ export default function LandingPage() {
 
       {/* Why it is trustworthy */}
       <section className="border-t border-line py-16">
-        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
           Dibuat untuk jawaban yang bisa kamu cek.
         </h2>
         <div className="mt-10 grid gap-8 sm:grid-cols-3">
-          <div>
+          <div data-motion>
             <h3 className="font-heading text-heading-3 font-semibold text-ink">
               Anti-halusinasi
             </h3>
@@ -232,7 +234,7 @@ export default function LandingPage() {
               bukan mengarang. Jawaban hanya diambil dari berkas milikmu.
             </p>
           </div>
-          <div>
+          <div data-motion>
             <h3 className="font-heading text-heading-3 font-semibold text-ink">
               Dokumen terpisah per akun
             </h3>
@@ -241,7 +243,7 @@ export default function LandingPage() {
               level basis data, bukan sekadar di tampilan.
             </p>
           </div>
-          <div>
+          <div data-motion>
             <h3 className="font-heading text-heading-3 font-semibold text-ink">
               Sumber selalu terlihat
             </h3>
@@ -255,7 +257,7 @@ export default function LandingPage() {
 
       {/* Pricing — Good / Better / Best */}
       <section id="harga" className="scroll-mt-20 border-t border-line py-16">
-        <div className="text-center">
+        <div className="text-center" data-motion>
           <h2 className="font-heading text-heading-2 font-semibold text-ink">Harga yang sederhana</h2>
           <p className="mt-2 text-sm text-muted">
             Mulai gratis, tingkatkan saat butuh. Batalkan kapan saja.
@@ -265,6 +267,7 @@ export default function LandingPage() {
           {PLANS.map((p) => (
             <Card
               key={p.code}
+              data-motion
               className={`relative flex flex-col p-6 ${
                 p.featured ? "rounded-2xl border-accent ring-1 ring-accent" : ""
               }`}
@@ -302,10 +305,10 @@ export default function LandingPage() {
 
       {/* FAQ */}
       <section className="border-t border-line py-16">
-        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
           Pertanyaan umum
         </h2>
-        <div className="mx-auto mt-8 max-w-2xl divide-y divide-line rounded-xl border border-line bg-surface">
+        <div className="mx-auto mt-8 max-w-2xl divide-y divide-line rounded-xl border border-line bg-surface" data-motion>
           {FAQ.map((f) => (
             <details key={f.q} className="group px-5 py-4">
               <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-ink">
@@ -320,10 +323,10 @@ export default function LandingPage() {
 
       {/* Footer CTA */}
       <section className="border-t border-line py-16 text-center">
-        <h2 className="font-heading text-heading-2 font-semibold text-ink">
+        <h2 className="font-heading text-heading-2 font-semibold text-ink" data-motion>
           Siap bertanya ke dokumenmu?
         </h2>
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-6 flex justify-center gap-3" data-motion>
           <LinkButton href="/signup" size="lg">
             Coba gratis
           </LinkButton>

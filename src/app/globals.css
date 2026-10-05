@@ -29,6 +29,24 @@ body {
   color: theme("colors.accent.hover");
 }
 
+/*
+ * Marketing entrance motion (see LandingMotion.tsx). The `js-motion` class is
+ * added to <html> by a tiny inline script before first paint, so the initial
+ * hidden state never applies when JS is unavailable or the bundle fails to
+ * load — the page then simply renders fully. That script also removes the
+ * class again if GSAP never signals ready.
+ */
+.js-motion [data-motion] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-motion [data-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
 /* Subtle scrollbars that match the warm canvas. */
 * {
   scrollbar-width: thin;

@@ -5,7 +5,7 @@
  * from both server and client components.
  */
 import Link from "next/link";
-import type { ReactNode, ButtonHTMLAttributes } from "react";
+import type { ReactNode, ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 /* --------------------------------- Button -------------------------------- */
 
@@ -50,13 +50,15 @@ export function Button({
 export function Card({
   className = "",
   children,
-}: {
+  ...rest
+}: HTMLAttributes<HTMLDivElement> & {
   className?: string;
   children: ReactNode;
 }) {
   return (
     <div
       className={`rounded-xl border border-line bg-surface shadow-card ${className}`}
+      {...rest}
     >
       {children}
     </div>
@@ -79,7 +81,8 @@ export function Badge({
   tone = "neutral",
   className = "",
   children,
-}: {
+  ...rest
+}: HTMLAttributes<HTMLSpanElement> & {
   tone?: Tone;
   className?: string;
   children: ReactNode;
@@ -87,6 +90,7 @@ export function Badge({
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${TONES[tone]} ${className}`}
+      {...rest}
     >
       {children}
     </span>
