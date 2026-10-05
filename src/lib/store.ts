@@ -304,33 +304,67 @@ function parsePgVector(s: string): number[] {
 /* --------------------------- demo daily budget --------------------------- */
 
 /**
- * Atomically count one demo question against today's UTC budget and return
- * whether it is still within `limit`.
+ * Count one demo question against today's UTC budget and report whether it is
+ * still allowed, enforcing BOTH a per-IP daily cap and a global daily cap.
  *
- * This lives in Postgres (not the in-memory rate limiter) on purpose: the
- * per-process `rateLimit()` Map resets on every cold start / instance, so it
- * cannot bound LLM spend on a multi-instance deploy. A single INSERT ... ON
- * CONFLICT DO UPDATE is atomic under concurrency, so the cap holds even when
- * many requests arrive at once.
+ * Why two caps: the global cap bounds total LLM spend, but on its own it is
+ * drainable by a single caller — one IP could burn the whole day's budget and
+ * lock every later visitor out. The per-IP cap (tiny) blunts that; the global
+ * cap stays the real backstop. Both live in Postgres, not the in-memory
+ * limiter, because that Map resets on every cold start / instance and so
+ * cannot bound spend across instances.
  *
- * Fails OPEN with `allowed: true` if the table is missing, so a deploy that
- * has not yet run the migration keeps the demo working rather than 500-ing.
+ * FAILS CLOSED: if the tables are missing or the query errors we return
+ * `allowed: false`. On an anonymous LLM endpoint the safe default is to refuse
+ * to spend, not to spend unbounded.
  */
 export async function countDemoQuestion(
-  limit: number
-): Promise<{ allowed: boolean; used: number }> {
+  ipKey: string,
+  globalLimit: number,
+  perIpLimit: number
+): Promise<{ allowed: boolean; reason?: "ip" | "global" | "error" }> {
   try {
-    const res = await pool().query<{ count: number }>(
+    const p = pool();
+
+    const ip = await p.query<{ count: number }>(
+      `INSERT INTO demo_usage_ip (day, ip, count)
+       VALUES ((now() AT TIME ZONE 'utc')::date, $1, 1)
+       ON CONFLICT (day, ip) DO UPDATE SET count = demo_usage_ip.count + 1
+       RETURNING count`,
+      [ipKey]
+    );
+    if ((ip.rows[0]?.count ?? 1) > perIpLimit) {
+      return { allowed: false, reason: "ip" };
+    }
+
+    const global = await p.query<{ count: number }>(
       `INSERT INTO demo_usage (day, count)
        VALUES ((now() AT TIME ZONE 'utc')::date, 1)
        ON CONFLICT (day) DO UPDATE SET count = demo_usage.count + 1
-       RETURNING count`,
-      []
+       RETURNING count`
     );
-    const used = res.rows[0]?.count ?? 0;
-    return { allowed: used <= limit, used };
+    if ((global.rows[0]?.count ?? 1) > globalLimit) {
+      return { allowed: false, reason: "global" };
+    }
+
+    return { allowed: true };
   } catch (err) {
-    console.error("[demo] daily counter failed; allowing request:", err);
-    return { allowed: true, used: 0 };
+    console.error("[demo] usage counter failed; denying request:", err);
+    return { allowed: false, reason: "error" };
+  }
+}
+
+/**
+ * Whether the durable demo counters are usable. The demo endpoint fails closed
+ * without them, so the landing probes this first and hides the whole demo
+ * section on an un-migrated deploy rather than offering a card that 503s.
+ */
+export async function demoUsageReady(): Promise<boolean> {
+  try {
+    await pool().query(`SELECT 1 FROM demo_usage LIMIT 1`);
+    await pool().query(`SELECT 1 FROM demo_usage_ip LIMIT 1`);
+    return true;
+  } catch {
+    return false;
   }
 }

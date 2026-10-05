@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Alert, Button, Card, Dots, Icon, Input } from "@/components/ui";
 
 /**
  * Landing demo: ask the sample documents a question without signing up.
  *
- * The endpoint is opt-in (503 when DEMO_TENANT_ID is unset); on 503 this
- * component renders nothing, so an unconfigured deploy simply has no demo
- * card rather than a broken one. Result content is rendered after mount and is
- * deliberately NOT marked `data-motion` — PageMotion only animates elements
- * present at first render.
+ * This owns its whole <section>, heading included, because the demo is opt-in
+ * and fails closed: the endpoint is disabled without DEMO_TENANT_ID and without
+ * the durable counter tables. It probes GET /api/demo for {enabled} and renders
+ * nothing until it knows, so an unconfigured deploy shows no orphan heading.
+ * Result content is rendered after mount and is deliberately NOT marked
+ * `data-motion` — PageMotion only animates elements present at first render.
  */
 
 interface DemoCitation {
@@ -64,9 +65,23 @@ export function DemoAsk() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [hidden, setHidden] = useState(false);
+  // null = still probing; false = unavailable (render nothing).
+  const [enabled, setEnabled] = useState<boolean | null>(null);
 
-  if (hidden) return null;
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/demo")
+      .then((r) => (r.ok ? r.json() : { enabled: false }))
+      .then((j: { enabled?: boolean }) => {
+        if (alive) setEnabled(j.enabled === true);
+      })
+      .catch(() => {
+        if (alive) setEnabled(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function ask(q: string) {
     const text = q.trim();
@@ -81,7 +96,7 @@ export function DemoAsk() {
         body: JSON.stringify({ question: text }),
       });
       if (res.status === 503) {
-        setHidden(true);
+        setEnabled(false);
         return;
       }
       if (res.status === 429) {
@@ -107,108 +122,127 @@ export function DemoAsk() {
     }
   }
 
+  // Unknown or unavailable: render nothing at all (no orphan heading).
+  if (enabled !== true) return null;
+
   const refused = result
     ? REFUSAL_RE.test(result.answer.slice(0, 160))
     : false;
 
   return (
-    <Card className="mt-10 p-5 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") ask(question);
-          }}
-          placeholder="Tulis pertanyaan, mis. berapa jatah cuti tahunan?"
-          aria-label="Pertanyaan untuk dokumen contoh"
-          maxLength={300}
-          disabled={loading}
-        />
-        <Button
-          onClick={() => ask(question)}
-          disabled={loading || question.trim().length === 0}
-          className="shrink-0"
-        >
-          {loading ? "Menjawab…" : "Tanya"}
-        </Button>
-      </div>
+    <section className="border-t border-line py-16">
+      <h2
+        className="font-heading text-center text-heading-2 font-semibold text-ink"
+        data-motion
+      >
+        Coba tanpa daftar.
+      </h2>
+      <p
+        className="mx-auto mt-2 max-w-xl text-center text-sm text-muted"
+        data-motion
+      >
+        Tanya ke tiga dokumen contoh dan lihat jawaban bersitasinya. Tanpa akun,
+        tanpa kartu.
+      </p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-muted">Coba:</span>
-        {EXAMPLES.map((ex) => (
-          <button
-            key={ex}
-            type="button"
-            onClick={() => {
-              setQuestion(ex);
-              ask(ex);
+      <Card className="mt-10 p-5 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") ask(question);
             }}
+            placeholder="Tulis pertanyaan, mis. berapa jatah cuti tahunan?"
+            aria-label="Pertanyaan untuk dokumen contoh"
+            maxLength={300}
             disabled={loading}
-            className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+          />
+          <Button
+            onClick={() => ask(question)}
+            disabled={loading || question.trim().length === 0}
+            className="shrink-0"
           >
-            {ex}
-          </button>
-        ))}
-      </div>
-
-      {loading && (
-        <div className="mt-5 flex items-center gap-2 text-sm text-muted">
-          <Dots />
-          Mencari di dokumen contoh…
+            {loading ? "Menjawab…" : "Tanya"}
+          </Button>
         </div>
-      )}
 
-      {error && (
-        <div className="mt-5">
-          <Alert tone="warning">{error}</Alert>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted">Coba:</span>
+          {EXAMPLES.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              onClick={() => {
+                setQuestion(ex);
+                ask(ex);
+              }}
+              disabled={loading}
+              className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+            >
+              {ex}
+            </button>
+          ))}
         </div>
-      )}
 
-      {result && !loading && (
-        <div className="mt-5 border-t border-line pt-5">
-          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
-            <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
-              <Icon name="file" className="h-3 w-3" />
-            </span>
-            DocuAsk
-            {!result.usedLlm && (
-              <span className="rounded border border-line px-1.5 py-0.5 text-body-sm">
-                tanpa LLM
+        {loading && (
+          <div className="mt-5 flex items-center gap-2 text-sm text-muted">
+            <Dots />
+            Mencari di dokumen contoh…
+          </div>
+        )}
+
+        {error && (
+          <div className="mt-5">
+            <Alert tone="warning">{error}</Alert>
+          </div>
+        )}
+
+        {result && !loading && (
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
+              <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
+                <Icon name="file" className="h-3 w-3" />
               </span>
+              DocuAsk
+              {!result.usedLlm && (
+                <span className="rounded border border-line px-1.5 py-0.5 text-body-sm">
+                  tanpa LLM
+                </span>
+              )}
+            </div>
+            <p className="text-sm leading-relaxed text-ink">
+              {renderAnswer(result.answer)}
+            </p>
+            {refused && (
+              <p className="mt-2 text-xs text-muted">
+                Ini perilaku yang kami janjikan: kalau jawabannya tidak ada,
+                DocuAsk mengatakannya — bukan mengarang.
+              </p>
+            )}
+            {!refused && result.citations.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {result.citations.map((c, i) => (
+                  <span
+                    key={`${c.filename}-${c.page}-${i}`}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                  >
+                    <span className="font-medium text-accent">[{i + 1}]</span>
+                    <Icon name="file" className="h-3.5 w-3.5" />
+                    {c.filename} · hlm. {c.page}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
-          <p className="text-sm leading-relaxed text-ink">
-            {renderAnswer(result.answer)}
-          </p>
-          {refused && (
-            <p className="mt-2 text-xs text-muted">
-              Ini perilaku yang kami janjikan: kalau jawabannya tidak ada,
-              DocuAsk mengatakannya — bukan mengarang.
-            </p>
-          )}
-          {!refused && result.citations.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {result.citations.map((c, i) => (
-                <span
-                  key={`${c.filename}-${c.page}-${i}`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
-                >
-                  <span className="font-medium text-accent">[{i + 1}]</span>
-                  <Icon name="file" className="h-3.5 w-3.5" />
-                  {c.filename} · hlm. {c.page}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      <p className="mt-5 text-xs text-muted">
-        Pertanyaan demo tidak disimpan dan tidak terhubung ke akun. Dokumen yang
-        dipakai adalah tiga contoh: kebijakan cuti, kontrak kerja, dan SOP
-        pengadaan.
-      </p>
-    </Card>
+        <p className="mt-5 text-xs text-muted">
+          Pertanyaan demo tidak disimpan dan tidak terhubung ke akun. Dokumen
+          yang dipakai adalah tiga contoh: kebijakan cuti, kontrak kerja, dan SOP
+          pengadaan.
+        </p>
+      </Card>
+    </section>
   );
 }

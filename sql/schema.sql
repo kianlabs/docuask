@@ -80,7 +80,33 @@ CREATE POLICY tenant_isolation_chunks ON chunks
 -- tenant-scoped and NOT under RLS: it holds no customer data, only a per-day
 -- request count that bounds unauthenticated LLM spend. The in-memory rate
 -- limiter alone resets per instance, so this table is the real ceiling.
+--
+-- Two tables, two caps: `demo_usage` is the global ceiling; `demo_usage_ip`
+-- stops one caller from draining the global budget and locking everyone else
+-- out. `ip` is a salted hash of the client IP (no raw IP is stored).
 CREATE TABLE IF NOT EXISTS demo_usage (
   day   DATE PRIMARY KEY,
   count INTEGER NOT NULL DEFAULT 0
 );
+
+CREATE TABLE IF NOT EXISTS demo_usage_ip (
+  day   DATE NOT NULL,
+  ip    TEXT NOT NULL,
+  count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (day, ip)
+);
+
+-- Explicit grants, but only if the app role already exists. schema.sql is
+-- applied BEFORE roles.sql (README, DEPLOY.md, docker-compose, CI) and CI runs
+-- it without roles.sql at all, so a bare `GRANT ... TO docuask_app` would abort
+-- the whole migration with "role does not exist" under ON_ERROR_STOP=1.
+-- roles.sql already grants ON ALL TABLES, so this block is belt-and-braces for
+-- the case where schema.sql is re-run after roles.sql.
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'docuask_app') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON demo_usage    TO docuask_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON demo_usage_ip TO docuask_app;
+  END IF;
+END
+$$;
