@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { Alert, Button, Card, Dots, Icon, Input } from "@/components/ui";
+import { Alert, Button, Card, Dots, Icon, Input, LinkButton } from "@/components/ui";
 
 /**
  * Landing demo: ask the sample documents a question without signing up.
  *
- * This owns its whole <section>, heading included, because the demo is opt-in
- * and fails closed: the endpoint is disabled without DEMO_TENANT_ID and without
- * the durable counter tables. It probes GET /api/demo for {enabled} and renders
- * nothing until it knows, so an unconfigured deploy shows no orphan heading.
+ * The landing page owns the <section>, heading, and intro copy so they are
+ * always in the server HTML for crawlers. This component owns only the
+ * interactive card and degrades gracefully: while probing GET /api/demo it
+ * renders nothing (the heading above already carries the section), and when
+ * the demo is disabled it shows a calm fallback with a signup CTA.
  * Result content is rendered after mount and is deliberately NOT marked
  * `data-motion` — PageMotion only animates elements present at first render.
  */
@@ -65,7 +66,7 @@ export function DemoAsk() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // null = still probing; false = unavailable (render nothing).
+  // null = still probing (render nothing); false = unavailable (fallback card).
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -122,127 +123,126 @@ export function DemoAsk() {
     }
   }
 
-  // Unknown or unavailable: render nothing at all (no orphan heading).
-  if (enabled !== true) return null;
+  // While probing, render nothing: the static heading above already fills the
+  // section, so there is no orphan. When disabled, show a calm fallback CTA.
+  if (enabled === null) return null;
 
   const refused = result
     ? REFUSAL_RE.test(result.answer.slice(0, 160))
     : false;
 
-  return (
-    <section className="border-t border-line py-16">
-      <h2
-        className="font-heading text-center text-heading-2 font-semibold text-ink"
-        data-motion
-      >
-        Coba tanpa daftar.
-      </h2>
-      <p
-        className="mx-auto mt-2 max-w-xl text-center text-sm text-muted"
-        data-motion
-      >
-        Tanya ke tiga dokumen contoh dan lihat jawaban bersitasinya. Tanpa akun,
-        tanpa kartu.
-      </p>
-
-      <Card className="mt-10 p-5 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Input
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") ask(question);
-            }}
-            placeholder="Tulis pertanyaan, mis. berapa jatah cuti tahunan?"
-            aria-label="Pertanyaan untuk dokumen contoh"
-            maxLength={300}
-            disabled={loading}
-          />
-          <Button
-            onClick={() => ask(question)}
-            disabled={loading || question.trim().length === 0}
-            className="shrink-0"
-          >
-            {loading ? "Menjawab…" : "Tanya"}
-          </Button>
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted">Coba:</span>
-          {EXAMPLES.map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              onClick={() => {
-                setQuestion(ex);
-                ask(ex);
-              }}
-              disabled={loading}
-              className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
-            >
-              {ex}
-            </button>
-          ))}
-        </div>
-
-        {loading && (
-          <div className="mt-5 flex items-center gap-2 text-sm text-muted">
-            <Dots />
-            Mencari di dokumen contoh…
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-5">
-            <Alert tone="warning">{error}</Alert>
-          </div>
-        )}
-
-        {result && !loading && (
-          <div className="mt-5 border-t border-line pt-5">
-            <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
-              <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
-                <Icon name="file" className="h-3 w-3" />
-              </span>
-              DocuAsk
-              {!result.usedLlm && (
-                <span className="rounded border border-line px-1.5 py-0.5 text-body-sm">
-                  tanpa LLM
-                </span>
-              )}
-            </div>
-            <p className="text-sm leading-relaxed text-ink">
-              {renderAnswer(result.answer)}
-            </p>
-            {refused && (
-              <p className="mt-2 text-xs text-muted">
-                Ini perilaku yang kami janjikan: kalau jawabannya tidak ada,
-                DocuAsk mengatakannya — bukan mengarang.
-              </p>
-            )}
-            {!refused && result.citations.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {result.citations.map((c, i) => (
-                  <span
-                    key={`${c.filename}-${c.page}-${i}`}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
-                  >
-                    <span className="font-medium text-accent">[{i + 1}]</span>
-                    <Icon name="file" className="h-3.5 w-3.5" />
-                    {c.filename} · hlm. {c.page}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        <p className="mt-5 text-xs text-muted">
-          Pertanyaan demo tidak disimpan dan tidak terhubung ke akun. Dokumen
-          yang dipakai adalah tiga contoh: kebijakan cuti, kontrak kerja, dan SOP
-          pengadaan.
+  if (enabled === false) {
+    return (
+      <Card className="mt-10 p-5 text-center sm:p-6">
+        <p className="text-sm text-muted">
+          Demo langsung sedang tidak tersedia. Daftar gratis untuk mencoba
+          DocuAsk dengan dokumenmu sendiri.
         </p>
+        <LinkButton href="/signup" className="mt-4">
+          Daftar gratis
+        </LinkButton>
       </Card>
-    </section>
+    );
+  }
+
+  return (
+    <Card className="mt-10 p-5 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") ask(question);
+          }}
+          placeholder="Tulis pertanyaan, mis. berapa jatah cuti tahunan?"
+          aria-label="Pertanyaan untuk dokumen contoh"
+          maxLength={300}
+          disabled={loading}
+        />
+        <Button
+          onClick={() => ask(question)}
+          disabled={loading || question.trim().length === 0}
+          className="shrink-0"
+        >
+          {loading ? "Menjawab…" : "Tanya"}
+        </Button>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted">Coba:</span>
+        {EXAMPLES.map((ex) => (
+          <button
+            key={ex}
+            type="button"
+            onClick={() => {
+              setQuestion(ex);
+              ask(ex);
+            }}
+            disabled={loading}
+            className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-muted transition-colors hover:border-line-strong hover:text-ink disabled:opacity-50"
+          >
+            {ex}
+          </button>
+        ))}
+      </div>
+
+      {loading && (
+        <div className="mt-5 flex items-center gap-2 text-sm text-muted">
+          <Dots />
+          Mencari di dokumen contoh…
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-5">
+          <Alert tone="warning">{error}</Alert>
+        </div>
+      )}
+
+      {result && !loading && (
+        <div className="mt-5 border-t border-line pt-5">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
+            <span className="grid h-5 w-5 place-items-center rounded-md bg-accent text-white">
+              <Icon name="file" className="h-3 w-3" />
+            </span>
+            DocuAsk
+            {!result.usedLlm && (
+              <span className="rounded border border-line px-1.5 py-0.5 text-body-sm">
+                tanpa LLM
+              </span>
+            )}
+          </div>
+          <p className="text-sm leading-relaxed text-ink">
+            {renderAnswer(result.answer)}
+          </p>
+          {refused && (
+            <p className="mt-2 text-xs text-muted">
+              Ini perilaku yang kami janjikan: kalau jawabannya tidak ada,
+              DocuAsk mengatakannya — bukan mengarang.
+            </p>
+          )}
+          {!refused && result.citations.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {result.citations.map((c, i) => (
+                <span
+                  key={`${c.filename}-${c.page}-${i}`}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                >
+                  <span className="font-medium text-accent">[{i + 1}]</span>
+                  <Icon name="file" className="h-3.5 w-3.5" />
+                  {c.filename} · hlm. {c.page}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="mt-5 text-xs text-muted">
+        Pertanyaan demo tidak disimpan dan tidak terhubung ke akun. Dokumen
+        yang dipakai adalah tiga contoh: kebijakan cuti, kontrak kerja, dan SOP
+        pengadaan.
+      </p>
+    </Card>
   );
 }

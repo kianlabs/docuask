@@ -404,9 +404,25 @@ export default function LandingPage() {
         </Card>
       </section>
 
-      {/* Public demo — the component owns its own <section> and self-gates,
-          because the demo is opt-in (hidden entirely when unconfigured). */}
-      <DemoAsk />
+      {/* Public demo — static heading + intro live here so they are always in
+          the server HTML; DemoAsk owns only the interactive card and degrades
+          gracefully when the demo is unconfigured. */}
+      <section className="border-t border-line py-16">
+        <h2
+          className="font-heading text-center text-heading-2 font-semibold text-ink"
+          data-motion
+        >
+          Coba tanpa daftar.
+        </h2>
+        <p
+          className="mx-auto mt-2 max-w-xl text-center text-sm text-muted"
+          data-motion
+        >
+          Tanya ke tiga dokumen contoh dan lihat jawaban bersitasinya. Tanpa
+          akun, tanpa kartu.
+        </p>
+        <DemoAsk />
+      </section>
 
       {/* Use cases — internal links to the /untuk/* pages */}
       <section className="border-t border-line py-16">
@@ -518,6 +534,10 @@ export default function LandingPage() {
           ·{" "}
           <Link href="/security" className="hover:text-ink">
             Keamanan
+          </Link>{" "}
+          ·{" "}
+          <Link href="/blog" className="hover:text-ink">
+            Catatan
           </Link>{" "}
           ·{" "}
           <Link href="/login" className="hover:text-ink">

@@ -85,6 +85,12 @@ export function SiteHeader() {
           >
             Keamanan
           </Link>
+          <Link
+            href="/blog"
+            className="hidden rounded-lg px-3 py-1.5 text-sm text-muted hover:bg-sunken hover:text-ink sm:block"
+          >
+            Catatan
+          </Link>
 
           {!checked ? (
             <span className="h-8 w-24 animate-pulse rounded-lg bg-sunken" />
@@ -154,6 +160,12 @@ export function SiteHeader() {
                     className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
                   >
                     Keamanan
+                  </Link>
+                  <Link
+                    href="/blog"
+                    className="block px-4 py-2 text-sm text-muted hover:bg-sunken hover:text-ink"
+                  >
+                    Catatan
                   </Link>
                   {me && (
                     <Link

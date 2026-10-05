@@ -1,3 +1,5 @@
+import { POSTS } from "@/lib/blog";
+
 /**
  * Central site config for metadata, canonical URLs, sitemap, and JSON-LD.
  *
@@ -34,6 +36,14 @@ export const PUBLIC_ROUTES: { path: string; priority: number; changeFrequency: "
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/signup", priority: 0.8, changeFrequency: "monthly" },
   { path: "/security", priority: 0.5, changeFrequency: "yearly" },
+  { path: "/blog", priority: 0.6, changeFrequency: "weekly" },
+  // Article pages are derived from the single POSTS source so a new post is
+  // indexed automatically and the sitemap can never drift from the blog.
+  ...POSTS.map((post) => ({
+    path: `/blog/${post.slug}`,
+    priority: 0.5,
+    changeFrequency: "monthly" as const,
+  })),
   { path: "/untuk/hr", priority: 0.6, changeFrequency: "monthly" },
   { path: "/untuk/legal", priority: 0.6, changeFrequency: "monthly" },
   { path: "/untuk/konsultan", priority: 0.6, changeFrequency: "monthly" },
