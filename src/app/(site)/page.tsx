@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, Icon, LinkButton } from "@/components/ui";
 import { JsonLdGraph } from "@/components/JsonLd";
-import { LandingMotion } from "@/components/LandingMotion";
 import { SITE, SITE_URL } from "@/lib/site";
 
 /* Public marketing landing page — no API key, no internal jargon. */
@@ -138,7 +137,6 @@ export default function LandingPage() {
   return (
     <div className="mx-auto max-w-[960px] px-4">
       <JsonLdGraph nodes={STRUCTURED_DATA} />
-      <LandingMotion />
 
       {/* Hero */}
       <section className="grid items-center gap-10 py-16 lg:grid-cols-2 lg:py-24">

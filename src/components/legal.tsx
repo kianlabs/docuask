@@ -19,9 +19,11 @@ export function LegalPage({
 }) {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-16">
-      <h1 className="font-heading text-heading-1 font-bold text-ink">{title}</h1>
-      <p className="mt-2 text-xs text-muted">Terakhir diperbarui: {updated}</p>
-      <p className="mt-6 text-sm leading-relaxed text-muted">{intro}</p>
+      <div data-motion>
+        <h1 className="font-heading text-heading-1 font-bold text-ink">{title}</h1>
+        <p className="mt-2 text-xs text-muted">Terakhir diperbarui: {updated}</p>
+        <p className="mt-6 text-sm leading-relaxed text-muted">{intro}</p>
+      </div>
       <div className="mt-10 space-y-8">{children}</div>
       <p className="mt-12 border-t border-line pt-6 text-xs text-muted">
         Ada pertanyaan soal dokumen ini? Hubungi{" "}
@@ -45,7 +47,7 @@ export function LegalSection({
   children: ReactNode;
 }) {
   return (
-    <section>
+    <section data-motion>
       <h2 className="font-heading text-heading-3 font-semibold text-ink">
         {n}. {title}
       </h2>

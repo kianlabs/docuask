@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SITE, SITE_URL } from "@/lib/site";
+import { PageMotion } from "@/components/PageMotion";
 import "./globals.css";
 import "./fonts.css";
 
@@ -59,20 +60,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <body className="min-h-screen bg-canvas font-sans text-[15px] leading-relaxed text-ink antialiased">
         {/*
-         * Runs before the rest of the body parses: enables the marketing
-         * entrance animation, but only when motion is welcome and JS is
-         * actually running. If the bundle never loads (or GSAP throws), the
-         * class is dropped again after 2.5s so the page can never get stuck
-         * invisible. See LandingMotion.tsx.
+         * Runs before the rest of the body parses: enables the entrance
+         * animation, but only when motion is welcome and JS is actually
+         * running. If the bundle never loads (or GSAP throws), the class is
+         * dropped again after 2.5s so the page can never get stuck invisible.
+         * See PageMotion.tsx.
          */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if(!window.matchMedia||!window.matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("js-motion");setTimeout(function(){if(!document.documentElement.hasAttribute("data-motion-ready")){document.documentElement.classList.remove("js-motion")}},2500)}}catch(e){}})();`,
           }}
         />
+        <PageMotion />
         {children}
       </body>
     </html>

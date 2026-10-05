@@ -16,7 +16,7 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="flex-1">{children}</main>
+      <main className="flex-1" data-motion>{children}</main>
     </div>
   );
 }

@@ -94,12 +94,12 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-[960px] px-4 py-10">
-      <h1 className="font-heading text-heading-1 font-bold text-ink">Admin</h1>
-      <p className="mt-1 text-sm text-muted">
+      <h1 className="font-heading text-heading-1 font-bold text-ink" data-motion>Admin</h1>
+      <p className="mt-1 text-sm text-muted" data-motion>
         Semua tenant, paket, dan pemakaian bulan ini.
       </p>
 
-      <Card className="mt-6 flex gap-2 p-4">
+      <Card className="mt-6 flex gap-2 p-4" data-motion>
         <Input
           type="password"
           value={token}
@@ -173,7 +173,7 @@ export default function AdminPage() {
         </p>
       )}
 
-      <h2 className="mb-3 mt-10 font-heading text-heading-2 font-semibold text-ink">Pesanan</h2>
+      <h2 className="mb-3 mt-10 font-heading text-heading-2 font-semibold text-ink" data-motion>Pesanan</h2>
       {orders.length === 0 ? (
         <p className="text-sm text-muted">Belum ada pesanan.</p>
       ) : (

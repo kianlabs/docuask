@@ -200,7 +200,7 @@ export default function AccountPage() {
   return (
     <div className="mx-auto max-w-[960px] px-4 py-10">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mb-8 flex items-start justify-between gap-4" data-motion>
         <div>
           <h1 className="font-heading text-heading-1 font-bold text-ink">Dasbor akun</h1>
           <p className="mt-0.5 text-sm text-muted">{acct.email}</p>
@@ -233,7 +233,7 @@ export default function AccountPage() {
       )}
 
       {/* Usage */}
-      <Card className="mb-8 p-6">
+      <Card className="mb-8 p-6" data-motion>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="font-heading text-heading-3 font-semibold text-ink">Pemakaian bulan ini</h2>
           <Badge tone="accent">{usage.plan.name}</Badge>
@@ -245,7 +245,7 @@ export default function AccountPage() {
       </Card>
 
       {/* Plans — Good / Better / Best */}
-      <section className="mb-10">
+      <section className="mb-10" data-motion>
         <h2 className="mb-1 font-heading text-heading-2 font-semibold text-ink">Paket</h2>
         <p className="mb-4 text-xs text-muted">
           Tingkatkan kapan saja. Paket aktif setelah pembayaran dikonfirmasi.
@@ -297,7 +297,7 @@ export default function AccountPage() {
       </section>
 
       {/* Comparison table */}
-      <section className="mb-10">
+      <section className="mb-10" data-motion>
         <h2 className="mb-3 font-heading text-heading-2 font-semibold text-ink">Perbandingan paket</h2>
         <div className="overflow-x-auto rounded-xl border border-line bg-surface">
           <table className="w-full text-left text-sm">
@@ -331,7 +331,7 @@ export default function AccountPage() {
       </section>
 
       {/* Orders */}
-      <section className="mb-10">
+      <section className="mb-10" data-motion>
         <h2 className="mb-3 font-heading text-heading-2 font-semibold text-ink">Riwayat pesanan</h2>
         {acct.orders.length === 0 ? (
           <p className="text-sm text-muted">Belum ada pesanan.</p>
@@ -378,7 +378,7 @@ export default function AccountPage() {
       </section>
 
       {/* Developer / API key */}
-      <section>
+      <section data-motion>
         <Card className="p-6">
           <div className="flex items-center justify-between">
             <div>

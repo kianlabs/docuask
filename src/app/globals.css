@@ -30,11 +30,11 @@ body {
 }
 
 /*
- * Marketing entrance motion (see LandingMotion.tsx). The `js-motion` class is
- * added to <html> by a tiny inline script before first paint, so the initial
- * hidden state never applies when JS is unavailable or the bundle fails to
- * load — the page then simply renders fully. That script also removes the
- * class again if GSAP never signals ready.
+ * Entrance motion (see PageMotion.tsx). The `js-motion` class is added to
+ * <html> by a tiny inline script before first paint, so the initial hidden
+ * state never applies when JS is unavailable or the bundle fails to load — the
+ * page then simply renders fully. That script also removes the class again if
+ * GSAP never signals ready, and PageMotion drops it once it takes over.
  */
 .js-motion [data-motion] {
   opacity: 0;

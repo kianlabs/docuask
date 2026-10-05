@@ -35,14 +35,14 @@ export default function SignupPage() {
 
   return (
     <div className="mx-auto max-w-md px-4 py-16">
-      <div className="mb-6 text-center">
+      <div className="mb-6 text-center" data-motion>
         <h1 className="font-heading text-heading-1 font-bold text-ink">Buat akun gratis</h1>
         <p className="mt-1 text-sm text-muted">
           Mulai bertanya ke dokumenmu dalam hitungan menit.
         </p>
       </div>
 
-      <Card className="space-y-4 p-6">
+      <Card className="space-y-4 p-6" data-motion>
         <Field label="Email">
           <Input
             type="email"
