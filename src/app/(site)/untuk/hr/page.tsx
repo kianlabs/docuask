@@ -36,10 +36,10 @@ export default function HrPage() {
       ]}
       answer={{
         q: "Berapa jatah cuti tahunan karyawan tetap?",
-        a: "Karyawan tetap mendapat 12 hari cuti tahunan berbayar, bertambah menjadi 15 hari setelah dua tahun masa kerja.",
+        a: "Setiap karyawan tetap berhak atas 18 hari cuti berbayar per tahun, dapat diambil setelah 3 bulan masa kerja. Sisa cuti maksimal 6 hari dapat dibawa ke tahun berikutnya.",
         cites: [
-          { file: "kebijakan-cuti-contoh.pdf", page: 3 },
-          { file: "kontrak-kerja-contoh.pdf", page: 2 },
+          { file: "kebijakan-cuti-contoh.pdf", page: 2 },
+          { file: "kebijakan-cuti-contoh.pdf", page: 1 },
         ],
       }}
     />

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, Icon, LinkButton } from "@/components/ui";
 import { JsonLdGraph } from "@/components/JsonLd";
+import { DemoAsk } from "@/components/DemoAsk";
 import { SITE, SITE_URL } from "@/lib/site";
 
 /* Public marketing landing page — no API key, no internal jargon. */
@@ -401,6 +402,17 @@ export default function LandingPage() {
             </div>
           </div>
         </Card>
+      </section>
+
+      {/* Public demo — ask the sample documents, no signup */}
+      <section className="border-t border-line py-16">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
+          Coba tanpa daftar.
+        </h2>
+        <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted" data-motion>
+          Tanya ke tiga dokumen contoh dan lihat jawaban bersitasinya. Tanpa akun, tanpa kartu.
+        </p>
+        <DemoAsk />
       </section>
 
       {/* Use cases — internal links to the /untuk/* pages */}

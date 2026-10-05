@@ -74,3 +74,13 @@ CREATE POLICY tenant_isolation_chunks ON chunks
 -- fail-closed, not fail-open. The NULLIF(..., '') is required because a pooled
 -- connection can leave the setting as an empty string, and casting '' to int
 -- raises 22P02 (see PITFALLS in STATUS.md).
+
+-- ------------------------------------------------------------ demo_usage ---
+-- Durable daily budget for the public demo endpoint. Deliberately NOT
+-- tenant-scoped and NOT under RLS: it holds no customer data, only a per-day
+-- request count that bounds unauthenticated LLM spend. The in-memory rate
+-- limiter alone resets per instance, so this table is the real ceiling.
+CREATE TABLE IF NOT EXISTS demo_usage (
+  day   DATE PRIMARY KEY,
+  count INTEGER NOT NULL DEFAULT 0
+);

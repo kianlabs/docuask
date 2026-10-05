@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "db:setup": "psql \"$DATABASE_URL\" -f sql/schema.sql",
+    "db:seed-demo": "tsx scripts/seed-demo.ts",
     "e2e": "tsx scripts/e2e.ts"
   },
   "dependencies": {

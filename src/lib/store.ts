@@ -300,3 +300,37 @@ function parsePgVector(s: string): number[] {
     .split(",")
     .map((x) => Number(x));
 }
+
+/* --------------------------- demo daily budget --------------------------- */
+
+/**
+ * Atomically count one demo question against today's UTC budget and return
+ * whether it is still within `limit`.
+ *
+ * This lives in Postgres (not the in-memory rate limiter) on purpose: the
+ * per-process `rateLimit()` Map resets on every cold start / instance, so it
+ * cannot bound LLM spend on a multi-instance deploy. A single INSERT ... ON
+ * CONFLICT DO UPDATE is atomic under concurrency, so the cap holds even when
+ * many requests arrive at once.
+ *
+ * Fails OPEN with `allowed: true` if the table is missing, so a deploy that
+ * has not yet run the migration keeps the demo working rather than 500-ing.
+ */
+export async function countDemoQuestion(
+  limit: number
+): Promise<{ allowed: boolean; used: number }> {
+  try {
+    const res = await pool().query<{ count: number }>(
+      `INSERT INTO demo_usage (day, count)
+       VALUES ((now() AT TIME ZONE 'utc')::date, 1)
+       ON CONFLICT (day) DO UPDATE SET count = demo_usage.count + 1
+       RETURNING count`,
+      []
+    );
+    const used = res.rows[0]?.count ?? 0;
+    return { allowed: used <= limit, used };
+  } catch (err) {
+    console.error("[demo] daily counter failed; allowing request:", err);
+    return { allowed: true, used: 0 };
+  }
+}
