@@ -109,6 +109,24 @@ const COMPARE = [
   { label: "Bisa tanya dengan bahasa sehari-hari", values: ["ya", "tidak", "ya"] },
 ];
 
+const USE_CASES = [
+  {
+    href: "/untuk/hr",
+    title: "HR",
+    body: "Jawab pertanyaan cuti, onboarding, dan kontrak tanpa membuka ulang PDF.",
+  },
+  {
+    href: "/untuk/legal",
+    title: "Legal",
+    body: "Telusuri klausul di kontrak panjang, lengkap dengan rujukan halaman.",
+  },
+  {
+    href: "/untuk/konsultan",
+    title: "Konsultan",
+    body: "Temukan temuan dan angka di laporan klien, cepat dan bersitasi.",
+  },
+];
+
 const WORKSPACE_DOCS = [
   { file: "kebijakan-cuti-contoh.pdf", meta: "2 hal · 6 bagian" },
   { file: "kontrak-kerja-contoh.pdf", meta: "4 hal · 11 bagian" },
@@ -383,6 +401,28 @@ export default function LandingPage() {
             </div>
           </div>
         </Card>
+      </section>
+
+      {/* Use cases — internal links to the /untuk/* pages */}
+      <section className="border-t border-line py-16">
+        <h2 className="font-heading text-center text-heading-2 font-semibold text-ink" data-motion>
+          Untuk tim kamu.
+        </h2>
+        <div className="mt-10 grid gap-6 sm:grid-cols-3">
+          {USE_CASES.map((u) => (
+            <Link key={u.href} href={u.href} className="block" data-motion>
+              <Card className="h-full transition-colors hover:border-line-strong">
+                <div className="p-5">
+                  <h3 className="font-heading text-heading-3 font-semibold text-ink">{u.title}</h3>
+                  <p className="mt-1 text-sm text-muted">{u.body}</p>
+                  <span className="mt-3 inline-block text-sm font-medium text-accent">
+                    Lihat selengkapnya →
+                  </span>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </section>
 
       {/* Pricing — Good / Better / Best */}
