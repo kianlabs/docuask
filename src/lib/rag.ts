@@ -121,7 +121,7 @@ export async function answerQuestion(
     filename: c.filename,
     page: c.page,
     score: Number(c.score.toFixed(4)),
-    snippet: c.text.slice(0, 200),
+    snippet: c.text.slice(0, 450).trim(),
   }));
 
   const cfg = llmConfig();

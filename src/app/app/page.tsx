@@ -13,6 +13,7 @@ import {
   Input,
   QuotaBar,
 } from "@/components/ui";
+import { CitationModal } from "@/components/CitationModal";
 
 /* ------------------------------- types ----------------------------------- */
 
@@ -79,6 +80,11 @@ export default function AppPage() {
   const [dragging, setDragging] = useState(false);
   const [confirmId, setConfirmId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [activeCitation, setActiveCitation] = useState<{
+    citation: Citation;
+    allCitations: Citation[];
+    currentIndex: number;
+  } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   /* --------------------------- data loaders ------------------------------ */
@@ -517,6 +523,13 @@ export default function AppPage() {
                     copied={copied === m.id}
                     onCopy={() => copy(m.text, m.id)}
                     onFeedback={(v) => feedback(m.id, v)}
+                    onOpenCitation={(c, idx, all) => {
+                      setActiveCitation({
+                        citation: c,
+                        allCitations: all,
+                        currentIndex: idx,
+                      });
+                    }}
                   />
                 )
               )}
@@ -613,6 +626,24 @@ export default function AppPage() {
           </div>
         </div>
       )}
+
+      {/* Citation Modal / Drawer */}
+      <CitationModal
+        isOpen={activeCitation !== null}
+        onClose={() => setActiveCitation(null)}
+        citation={activeCitation?.citation ?? null}
+        allCitations={activeCitation?.allCitations}
+        currentIndex={activeCitation?.currentIndex}
+        onSelectCitation={(idx) => {
+          if (activeCitation && activeCitation.allCitations[idx]) {
+            setActiveCitation({
+              citation: activeCitation.allCitations[idx],
+              allCitations: activeCitation.allCitations,
+              currentIndex: idx,
+            });
+          }
+        }}
+      />
     </div>
   );
 }
@@ -627,7 +658,12 @@ export default function AppPage() {
  * mention only becomes a link when that page is actually among the sources,
  * so incidental numbers are left untouched.
  */
-function renderInline(text: string, cites: Citation[], anchor: string): ReactNode[] {
+function renderInline(
+  text: string,
+  cites: Citation[],
+  anchor: string,
+  onOpenCitation?: (c: Citation, idx: number, all: Citation[]) => void
+): ReactNode[] {
   const out: ReactNode[] = [];
   const token =
     /(\*\*[^*]+\*\*|`[^`]+`|\[page\s*\d+\]|\[\d+\]|(?:halaman|hlm\.?|page)\s*\d+)/gi;
@@ -672,16 +708,22 @@ function renderInline(text: string, cites: Citation[], anchor: string): ReactNod
       if (idx < 0) {
         out.push(t);
       } else {
+        const targetCite = cites[idx];
         out.push(
-          <sup key={`${anchor}-r${seq++}`}>
-            <a
-              href={`#src-${anchor}-${idx + 1}`}
-              title={`${cites[idx].filename} — hlm. ${cites[idx].page}`}
-              className="mx-0.5 text-xs font-semibold text-accent hover:underline"
-            >
-              [{idx + 1}]
-            </a>
-          </sup>
+          <button
+            key={`${anchor}-r${seq++}`}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenCitation?.(targetCite, idx, cites);
+            }}
+            title={`${targetCite.filename} — hlm. ${targetCite.page}. Klik untuk melihat kutipan sumber.`}
+            className="group inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50/90 text-amber-900 hover:bg-amber-100 hover:border-amber-400 hover:shadow-xs transition-all text-xs font-semibold cursor-pointer align-baseline focus:outline-none focus:ring-2 focus:ring-amber-400"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 group-hover:scale-110 transition-transform shrink-0" />
+            <span>hlm. {targetCite.page}</span>
+            <span className="text-[10px] font-mono text-amber-700/80">[{idx + 1}]</span>
+          </button>
         );
       }
     }
@@ -696,7 +738,13 @@ function renderInline(text: string, cites: Citation[], anchor: string): ReactNod
  * `1.` numbered items become real lists, and `#` headings get emphasis. The
  * model replies in Markdown, so without this the raw `**`/`-` leaked through.
  */
-function AnswerBody({ msg }: { msg: Msg }) {
+function AnswerBody({
+  msg,
+  onOpenCitation,
+}: {
+  msg: Msg;
+  onOpenCitation?: (c: Citation, idx: number, all: Citation[]) => void;
+}) {
   const cites = msg.citations ?? [];
   const blocks: ReactNode[] = [];
   let list: string[] = [];
@@ -713,7 +761,7 @@ function AnswerBody({ msg }: { msg: Msg }) {
         className={`ml-4 space-y-1 ${ordered ? "list-decimal" : "list-disc"}`}
       >
         {items.map((it, i) => (
-          <li key={i}>{renderInline(it, cites, msg.id)}</li>
+          <li key={i}>{renderInline(it, cites, msg.id, onOpenCitation)}</li>
         ))}
       </Tag>
     );
@@ -745,7 +793,7 @@ function AnswerBody({ msg }: { msg: Msg }) {
         key={`p-${seq++}`}
         className={heading ? "font-semibold text-ink" : undefined}
       >
-        {renderInline(heading ? heading[1] : line, cites, msg.id)}
+        {renderInline(heading ? heading[1] : line, cites, msg.id, onOpenCitation)}
       </p>
     );
   }
@@ -758,13 +806,25 @@ function Answer({
   copied,
   onCopy,
   onFeedback,
+  onOpenCitation,
 }: {
   msg: Msg;
   copied: boolean;
   onCopy: () => void;
   onFeedback: (v: "up" | "down") => void;
+  onOpenCitation: (c: Citation, idx: number, all: Citation[]) => void;
 }) {
   const cites = msg.citations ?? [];
+  const [copiedSource, setCopiedSource] = useState<number | null>(null);
+
+  const copySourceExcerpt = (c: Citation, idx: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `"${c.snippet}"\n\n— Sumber: ${c.filename}, Hlm. ${c.page}`;
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedSource(idx);
+      setTimeout(() => setCopiedSource((curr) => (curr === idx ? null : curr)), 1500);
+    });
+  };
 
   return (
     <div className="animate-fade-up">
@@ -777,31 +837,59 @@ function Answer({
       </div>
 
       <div className="rounded-2xl rounded-tl-sm border border-line bg-surface px-4 py-3 text-sm leading-relaxed text-ink shadow-card">
-        <AnswerBody msg={msg} />
+        <AnswerBody msg={msg} onOpenCitation={onOpenCitation} />
       </div>
 
-      {/* Source cards */}
+      {/* Source cards with elegant gold/amber styling */}
       {cites.length > 0 && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs font-medium text-muted">
-            Sumber ({cites.length})
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-muted">
+              Sumber Terkait ({cites.length})
+            </p>
+            <span className="text-[11px] text-amber-700/80 font-medium hidden sm:inline">
+              Klik sumber untuk pratinjau kutipan lengkap
+            </span>
+          </div>
           {cites.map((c, i) => (
             <div
               key={i}
               id={`src-${msg.id}-${i + 1}`}
-              className="scroll-mt-20 rounded-lg border border-line bg-surface px-3 py-2.5"
+              onClick={() => onOpenCitation(c, i, cites)}
+              className="group scroll-mt-20 rounded-xl border border-line bg-surface hover:border-amber-300 hover:bg-amber-50/20 px-3.5 py-2.5 transition-all cursor-pointer shadow-card hover:shadow-sm"
+              title="Klik untuk melihat teks kutipan lengkap"
             >
               <div className="flex items-center gap-2 text-xs">
-                <span className="grid h-4 w-4 place-items-center rounded-md bg-accent-soft text-xs font-semibold text-accent">
+                <span className="grid h-4.5 w-4.5 place-items-center rounded-md bg-amber-100 text-xs font-semibold text-amber-900 border border-amber-300/80 shrink-0">
                   {i + 1}
                 </span>
-                <Icon name="file" className="h-3.5 w-3.5 text-muted" />
-                <span className="truncate font-medium text-ink">{c.filename}</span>
-                <span className="text-muted">hlm. {c.page}</span>
-                <span className="ml-auto text-muted">{Math.round(c.score * 100)}%</span>
+                <Icon name="file" className="h-3.5 w-3.5 text-muted group-hover:text-amber-800 transition-colors shrink-0" />
+                <span className="truncate font-medium text-ink group-hover:text-amber-950">{c.filename}</span>
+                <span className="inline-flex items-center gap-1 rounded bg-amber-100/80 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200 shrink-0">
+                  hlm. {c.page}
+                </span>
+                <span className="ml-auto text-muted shrink-0">{Math.round(c.score * 100)}%</span>
+
+                <button
+                  type="button"
+                  onClick={(e) => copySourceExcerpt(c, i, e)}
+                  className="rounded px-2 py-0.5 text-[11px] font-medium text-amber-800 hover:bg-amber-100/90 transition-colors inline-flex items-center gap-1 border border-amber-300/60 shrink-0 ml-1"
+                  title="Salin kutipan teks ini"
+                >
+                  <Icon
+                    name={copiedSource === i ? "check" : "copy"}
+                    className={`h-3 w-3 ${copiedSource === i ? "text-positive" : "text-amber-700"}`}
+                  />
+                  <span>{copiedSource === i ? "Tersalin" : "Salin"}</span>
+                </button>
+
+                <span className="text-xs font-medium text-amber-700 opacity-0 group-hover:opacity-100 transition-opacity hidden sm:inline-flex items-center gap-0.5 ml-1">
+                  Lihat →
+                </span>
               </div>
-              <p className="mt-1.5 line-clamp-3 text-xs text-muted">{c.snippet}</p>
+              <p className="mt-2 line-clamp-2 text-xs text-muted/90 border-l-2 border-amber-400 pl-2.5 italic group-hover:text-ink/80 transition-colors">
+                “{c.snippet}”
+              </p>
             </div>
           ))}
         </div>

@@ -117,6 +117,8 @@ export async function POST(req: NextRequest) {
       citations: result.citations.map((c) => ({
         filename: c.filename,
         page: c.page,
+        snippet: c.snippet,
+        score: c.score,
       })),
     });
   } catch (err) {

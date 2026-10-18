@@ -213,18 +213,29 @@ export default function LandingPage() {
             </div>
             <p className="text-sm leading-relaxed text-ink">
               {SAMPLE.a}{" "}
-              <sup className="text-xs font-semibold text-accent">[1]</sup>
-              <sup className="text-xs font-semibold text-accent">[2]</sup>
+              <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span>hlm. 1</span>
+                <span className="text-[10px] font-mono text-amber-700/80">[1]</span>
+              </span>
+              <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                <span>hlm. 2</span>
+                <span className="text-[10px] font-mono text-amber-700/80">[2]</span>
+              </span>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {SAMPLE.cites.map((c, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200/80 bg-amber-50/60 px-2.5 py-1 text-xs text-ink"
                 >
-                  <span className="font-medium text-accent">[{i + 1}]</span>
-                  <Icon name="file" className="h-3.5 w-3.5" />
-                  {c.file} · hlm. {c.page}
+                  <span className="grid h-4 w-4 place-items-center rounded bg-amber-200 text-[10px] font-bold text-amber-900">
+                    {i + 1}
+                  </span>
+                  <Icon name="file" className="h-3.5 w-3.5 text-muted" />
+                  <span className="font-medium text-ink">{c.file}</span>
+                  <span className="text-amber-800 font-medium">· hlm. {c.page}</span>
                 </span>
               ))}
             </div>
@@ -383,18 +394,29 @@ export default function LandingPage() {
                   </div>
                   <p className="text-sm leading-relaxed text-ink">
                     {SAMPLE.a}{" "}
-                    <sup className="text-xs font-semibold text-accent">[1]</sup>
-                    <sup className="text-xs font-semibold text-accent">[2]</sup>
+                    <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span>hlm. 1</span>
+                      <span className="text-[10px] font-mono text-amber-700/80">[1]</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50 text-amber-900 text-xs font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span>hlm. 2</span>
+                      <span className="text-[10px] font-mono text-amber-700/80">[2]</span>
+                    </span>
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {SAMPLE.cites.map((c, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200/80 bg-amber-50/60 px-2.5 py-1 text-xs text-ink"
                       >
-                        <span className="font-medium text-accent">[{i + 1}]</span>
-                        <Icon name="file" className="h-3.5 w-3.5" />
-                        {c.file} · hlm. {c.page}
+                        <span className="grid h-4 w-4 place-items-center rounded bg-amber-200 text-[10px] font-bold text-amber-900">
+                          {i + 1}
+                        </span>
+                        <Icon name="file" className="h-3.5 w-3.5 text-muted" />
+                        <span className="font-medium text-ink">{c.file}</span>
+                        <span className="text-amber-800 font-medium">· hlm. {c.page}</span>
                       </span>
                     ))}
                   </div>

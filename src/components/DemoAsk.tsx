@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Alert, Button, Card, Dots, Icon, Input, LinkButton } from "@/components/ui";
+import { CitationModal } from "@/components/CitationModal";
 
 /**
  * Landing demo: ask the sample documents a question without signing up.
@@ -19,6 +20,8 @@ import { Alert, Button, Card, Dots, Icon, Input, LinkButton } from "@/components
 interface DemoCitation {
   filename: string;
   page: number;
+  snippet?: string;
+  score?: number;
 }
 
 interface DemoResult {
@@ -39,7 +42,11 @@ const REFUSAL_RE =
   /tidak (tersedia|ada|dapat|ditemukan|ditemui|menyebutkan|disebutkan|membahas|mencakup|memuat|relevan|memiliki|tersirat)/i;
 
 /** Render an answer: `**bold**` and `[page N]`/`[N]` markers become elements. */
-function renderAnswer(text: string): ReactNode[] {
+function renderAnswer(
+  text: string,
+  citations: DemoCitation[],
+  onOpenCitation?: (c: DemoCitation, idx: number, all: DemoCitation[]) => void
+): ReactNode[] {
   const out: ReactNode[] = [];
   // Split on bold or a page citation, keeping the delimiters.
   const parts = text.split(/(\*\*[^*]+\*\*|\[(?:page\s*)?\d+\])/gi);
@@ -49,11 +56,39 @@ function renderAnswer(text: string): ReactNode[] {
     if (bold) {
       out.push(<strong key={i}>{bold[1]}</strong>);
     } else if (cite) {
-      out.push(
-        <sup key={i} className="text-xs font-semibold text-accent">
-          [{cite[1]}]
-        </sup>
-      );
+      const num = Number(cite[1]);
+      const idxByPage = citations.findIndex((c) => c.page === num);
+      const matchIdx =
+        idxByPage >= 0
+          ? idxByPage
+          : num >= 1 && num <= citations.length
+          ? num - 1
+          : -1;
+      const target = matchIdx >= 0 ? citations[matchIdx] : null;
+
+      if (target && onOpenCitation) {
+        out.push(
+          <button
+            key={i}
+            type="button"
+            onClick={() => onOpenCitation(target, matchIdx, citations)}
+            className="inline-flex items-center gap-1 mx-0.5 px-1.5 py-0.5 rounded-md border border-amber-300 bg-amber-50/90 text-amber-900 hover:bg-amber-100 hover:border-amber-400 hover:shadow-xs transition-all text-xs font-semibold cursor-pointer align-baseline focus:outline-none focus:ring-2 focus:ring-amber-400"
+            title={`${target.filename} — hlm. ${target.page}. Klik untuk melihat kutipan sumber.`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+            <span>hlm. {target.page}</span>
+            <span className="text-[10px] font-mono text-amber-700/80">
+              [{matchIdx + 1}]
+            </span>
+          </button>
+        );
+      } else {
+        out.push(
+          <sup key={i} className="text-xs font-semibold text-amber-800 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">
+            [{cite[1]}]
+          </sup>
+        );
+      }
     } else if (p) {
       out.push(<span key={i}>{p}</span>);
     }
@@ -66,6 +101,11 @@ export function DemoAsk() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DemoResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeCitation, setActiveCitation] = useState<{
+    citation: DemoCitation;
+    allCitations: DemoCitation[];
+    currentIndex: number;
+  } | null>(null);
   // null = still probing (render nothing); false = unavailable (fallback card).
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
@@ -213,7 +253,9 @@ export function DemoAsk() {
             )}
           </div>
           <p className="text-sm leading-relaxed text-ink">
-            {renderAnswer(result.answer)}
+            {renderAnswer(result.answer, result.citations, (c, idx, all) => {
+              setActiveCitation({ citation: c, allCitations: all, currentIndex: idx });
+            })}
           </p>
           {refused && (
             <p className="mt-2 text-xs text-muted">
@@ -224,14 +266,29 @@ export function DemoAsk() {
           {!refused && result.citations.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
               {result.citations.map((c, i) => (
-                <span
+                <button
                   key={`${c.filename}-${c.page}-${i}`}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-2 py-1 text-xs text-muted"
+                  type="button"
+                  onClick={() => {
+                    setActiveCitation({
+                      citation: c,
+                      allCitations: result.citations,
+                      currentIndex: i,
+                    });
+                  }}
+                  className="group inline-flex items-center gap-1.5 rounded-lg border border-amber-200/80 bg-amber-50/60 hover:bg-amber-100/80 hover:border-amber-300 px-2.5 py-1 text-xs text-ink transition-all cursor-pointer shadow-xs focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  title="Klik untuk melihat potongan teks sumber dan menyalin kutipan"
                 >
-                  <span className="font-medium text-accent">[{i + 1}]</span>
-                  <Icon name="file" className="h-3.5 w-3.5" />
-                  {c.filename} · hlm. {c.page}
-                </span>
+                  <span className="grid h-4 w-4 place-items-center rounded bg-amber-200 text-[10px] font-bold text-amber-900">
+                    {i + 1}
+                  </span>
+                  <Icon name="file" className="h-3.5 w-3.5 text-muted group-hover:text-amber-800" />
+                  <span className="font-medium text-ink">{c.filename}</span>
+                  <span className="text-amber-800 font-medium">· hlm. {c.page}</span>
+                  <span className="text-[11px] font-semibold text-amber-700 ml-0.5 opacity-80 group-hover:opacity-100">
+                    Lihat Kutipan →
+                  </span>
+                </button>
               ))}
             </div>
           )}
@@ -243,6 +300,40 @@ export function DemoAsk() {
         yang dipakai adalah tiga contoh: kebijakan cuti, kontrak kerja, dan SOP
         pengadaan.
       </p>
+
+      {/* Citation modal for demo viewer */}
+      <CitationModal
+        isOpen={activeCitation !== null}
+        onClose={() => setActiveCitation(null)}
+        citation={
+          activeCitation
+            ? {
+                filename: activeCitation.citation.filename,
+                page: activeCitation.citation.page,
+                snippet:
+                  activeCitation.citation.snippet ??
+                  "Potongan teks dari dokumen contoh DocuAsk.",
+                score: activeCitation.citation.score,
+              }
+            : null
+        }
+        allCitations={activeCitation?.allCitations.map((c) => ({
+          filename: c.filename,
+          page: c.page,
+          snippet: c.snippet ?? "Potongan teks dari dokumen contoh DocuAsk.",
+          score: c.score,
+        }))}
+        currentIndex={activeCitation?.currentIndex}
+        onSelectCitation={(idx) => {
+          if (activeCitation && activeCitation.allCitations[idx]) {
+            setActiveCitation({
+              citation: activeCitation.allCitations[idx],
+              allCitations: activeCitation.allCitations,
+              currentIndex: idx,
+            });
+          }
+        }}
+      />
     </Card>
   );
 }
