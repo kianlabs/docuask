@@ -145,7 +145,7 @@ export function CitationModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg p-1.5 text-muted hover:bg-sunken hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent"
+              className="rounded-lg p-2 text-muted hover:bg-sunken hover:text-ink transition-colors focus:outline-none focus:ring-2 focus:ring-accent min-h-[36px] min-w-[36px] flex items-center justify-center"
               aria-label="Tutup sitasi"
             >
               <Icon name="close" className="h-4 w-4" />
@@ -226,7 +226,7 @@ export function CitationModal({
         </div>
 
         {/* Footer / Actions */}
-        <div className="border-t border-line bg-canvas/40 px-5 py-3 flex items-center justify-between gap-3 shrink-0">
+        <div className="border-t border-line bg-canvas/40 px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center justify-between gap-3 shrink-0">
           {/* Previous / Next buttons if multiple */}
           <div className="flex items-center gap-1">
             {hasMultiple && (

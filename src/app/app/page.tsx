@@ -864,7 +864,7 @@ function Answer({
                   {i + 1}
                 </span>
                 <Icon name="file" className="h-3.5 w-3.5 text-muted group-hover:text-amber-800 transition-colors shrink-0" />
-                <span className="truncate font-medium text-ink group-hover:text-amber-950">{c.filename}</span>
+                <span className="min-w-0 flex-1 truncate font-medium text-ink group-hover:text-amber-950">{c.filename}</span>
                 <span className="inline-flex items-center gap-1 rounded bg-amber-100/80 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-200 shrink-0">
                   hlm. {c.page}
                 </span>

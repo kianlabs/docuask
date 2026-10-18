@@ -282,10 +282,10 @@ export function DemoAsk() {
                   <span className="grid h-4 w-4 place-items-center rounded bg-amber-200 text-[10px] font-bold text-amber-900">
                     {i + 1}
                   </span>
-                  <Icon name="file" className="h-3.5 w-3.5 text-muted group-hover:text-amber-800" />
-                  <span className="font-medium text-ink">{c.filename}</span>
-                  <span className="text-amber-800 font-medium">· hlm. {c.page}</span>
-                  <span className="text-[11px] font-semibold text-amber-700 ml-0.5 opacity-80 group-hover:opacity-100">
+                  <Icon name="file" className="h-3.5 w-3.5 text-muted group-hover:text-amber-800 shrink-0" />
+                  <span className="font-medium text-ink truncate max-w-[120px] sm:max-w-[200px]">{c.filename}</span>
+                  <span className="text-amber-800 font-medium shrink-0">· hlm. {c.page}</span>
+                  <span className="text-[11px] font-semibold text-amber-700 ml-0.5 opacity-80 group-hover:opacity-100 shrink-0">
                     Lihat Kutipan →
                   </span>
                 </button>
