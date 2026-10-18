@@ -1,13 +1,16 @@
 # syntax=docker/dockerfile:1
 
+FROM node:22-alpine AS base
+
 # ---------- deps: install node_modules only (cached unless package files change)
-FROM node:22-slim AS deps
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # ---------- builder: compile the Next.js standalone bundle
-FROM node:22-slim AS builder
+FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -23,7 +26,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ---------- runner: minimal runtime image
-FROM node:22-slim AS runner
+FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -32,8 +35,11 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Run as a non-root user.
-RUN groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs nextjs
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 -G nodejs nextjs
+
+# Set correct permissions for prerender cache
+RUN mkdir -p .next && chown nextjs:nodejs .next
 
 # `output: "standalone"` emits a self-contained server + a trimmed node_modules.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
