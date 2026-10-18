@@ -77,7 +77,12 @@ CREATE POLICY tenant_isolation_usage_counters ON usage_counters
     OR current_setting('app.is_admin', true) = 'on'
   );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON usage_events TO docuask_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON usage_counters TO docuask_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON plans TO docuask_app;
-GRANT USAGE, SELECT ON SEQUENCE usage_events_id_seq TO docuask_app;
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'docuask_app') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON usage_events TO docuask_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON usage_counters TO docuask_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON plans TO docuask_app;
+    GRANT USAGE, SELECT ON SEQUENCE usage_events_id_seq TO docuask_app;
+  END IF;
+END $$;

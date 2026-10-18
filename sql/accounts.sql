@@ -67,7 +67,12 @@ CREATE POLICY tenant_isolation_orders ON orders
     OR current_setting('app.is_admin', true) = 'on'
   );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON users  TO docuask_app;
-GRANT SELECT, INSERT, UPDATE, DELETE ON orders TO docuask_app;
-GRANT USAGE, SELECT ON SEQUENCE users_id_seq  TO docuask_app;
-GRANT USAGE, SELECT ON SEQUENCE orders_id_seq TO docuask_app;
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'docuask_app') THEN
+    GRANT SELECT, INSERT, UPDATE, DELETE ON users  TO docuask_app;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON orders TO docuask_app;
+    GRANT USAGE, SELECT ON SEQUENCE users_id_seq  TO docuask_app;
+    GRANT USAGE, SELECT ON SEQUENCE orders_id_seq TO docuask_app;
+  END IF;
+END $$;
