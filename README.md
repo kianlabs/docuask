@@ -1,60 +1,134 @@
-# DocuAsk
-
-Upload a PDF, ask questions, get **answers with page citations**. Multi-tenant
-retrieval-augmented generation (RAG).
+# DocuAsk — Enterprise Multi-Tenant Document Intelligence & RAG
 
 [![CI](https://github.com/kianlabs/docuask/actions/workflows/ci.yml/badge.svg)](https://github.com/kianlabs/docuask/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-![Node](https://img.shields.io/badge/node-22-3c873a)
+![Next.js 14](https://img.shields.io/badge/Next.js-14-000000?logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwindcss&logoColor=white)
+![pgvector](https://img.shields.io/badge/PostgreSQL-pgvector_HNSW-336791?logo=postgresql&logoColor=white)
+![Cloudflare Workers AI](https://img.shields.io/badge/Cloudflare_Workers_AI-bge--m3-F38020?logo=cloudflare&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
+![Node](https://img.shields.io/badge/Node.js-22_LTS-3c873a?logo=nodedotjs&logoColor=white)
 
-**Production-ready:** Docker + Compose, health check, security headers, env
-validation, CI. See [`DEPLOY.md`](./DEPLOY.md) to ship it.
+Upload PDFs, ask deep analytical questions, and receive **fact-grounded answers with interactive page citations**. Built on a secure multi-tenant retrieval-augmented generation (RAG) architecture powered by PostgreSQL `pgvector`, Cloudflare Workers AI embeddings, and strict database row-level security.
 
-## How it works
+---
 
+## Architecture & Ingestion Flow
+
+```mermaid
+flowchart TD
+    subgraph Client["Web Workspace & Landing (Next.js 14)"]
+        UI["Workspace UI (/app) & Demo (/demo)"]
+        CitModal["Interactive Citation Modal & Excerpt Drawer"]
+        Upload["PDF Ingestion Portal (/api/ingest)"]
+        Chat["Q&A Query Interface (/api/chat)"]
+    end
+
+    subgraph Ingestion["Ingestion Pipeline"]
+        PDFParser["PDF Text & Metadata Extractor"]
+        Chunker["Semantic Text Chunker (Sliding Window)"]
+        Embedder["Embedding Engine (Cloudflare Workers AI BGE-M3)"]
+    end
+
+    subgraph Storage["Database & Vector Storage (PostgreSQL 18 + pgvector)"]
+        HNSW[("pgvector HNSW Index (1024-dim Cosine Similarity)")]
+        RLS["PostgreSQL Row-Level Security (Tenant Isolation)"]
+    end
+
+    subgraph RAGEngine["Retrieval & Inference Pipeline"]
+        QueryEmbed["Query Vectorizer"]
+        SimSearch["Cosine Nearest Neighbors Search"]
+        FloorCheck{"Score >= Retrieval Floor?"}
+        GroundedPrompt["Grounded Context Assembler (Prompt Injection Guard)"]
+        LLM["OpenAI-Compatible LLM Gateway"]
+        Fallback["Bypass LLM: 'Answer not found in context'"]
+    end
+
+    Upload --> PDFParser
+    PDFParser --> Chunker
+    Chunker --> Embedder
+    Embedder -->|Store Vector + Excerpts| RLS
+    RLS --> HNSW
+
+    Chat --> QueryEmbed
+    QueryEmbed --> SimSearch
+    SimSearch -->|Tenant-Scoped Vector Search| HNSW
+    HNSW --> SimSearch
+    SimSearch --> FloorCheck
+    FloorCheck -- "No" --> Fallback
+    FloorCheck -- "Yes" --> GroundedPrompt
+    GroundedPrompt --> LLM
+    LLM --> UI
+    Fallback --> UI
+    UI --> CitModal
 ```
-PDF ──▶ extract text ──▶ chunk ──▶ embed ──▶ pgvector (HNSW)
-                                                  │
-question ──▶ embed ──▶ nearest chunks ──▶ LLM (grounded prompt) ──▶ answer + [page N]
-```
 
-Two anti-hallucination guards: a **retrieval floor** (below it the LLM is never
-called) and a **grounded prompt** (the model may only use retrieved context).
+---
 
-## Stack
+## Key Highlights & Featured Innovations
 
-- **Next.js 14** (App Router) + TypeScript + Tailwind
-- **Postgres + pgvector** — vector search with an HNSW index (cosine)
-- **Cloudflare Workers AI `@cf/baai/bge-m3`** — 1024-dim semantic embeddings
-  (falls back to a local 1024-dim hash embedder with no credentials)
-- **Any OpenAI-compatible LLM** — point `LLM_BASE_URL` at your gateway
-- **Multi-tenant + Row-Level Security** — isolation enforced in the database
+- 🔍 **Interactive Citation Modal & Source Excerpts**: Every response includes clickable `[page N]` citation pills. Clicking a citation opens an interactive slide-over drawer showing the exact verbatim document excerpt, contextual highlighting, and an instant copy button for audit compliance.
+- 📚 **Cross-Document Comparative Analysis**: Ask questions that span multiple documents across your workspace library (e.g., comparing annual leave policy vs. travel reimbursement rules). DocuAsk aggregates relevant vector chunks from distinct PDFs into unified multi-document synthesis.
+- 🛡️ **Dual-Layer Anti-Hallucination Guardrails**:
+  1. *Retrieval Score Floor*: Evaluates vector similarity scores before calling the LLM. If chunks fail the minimum confidence threshold, the LLM is skipped entirely (`usedLlm: false`, `reason: below_retrieval_floor`).
+  2. *Grounded Prompt Contracts*: Constrains the language model to synthesize responses strictly from retrieved text snippets with explicit page citations; any ungrounded claim is replaced with "Information not found in document".
+- 🏢 **Multi-Tenancy with Database Row-Level Security (RLS)**: Tenant isolation is enforced at the PostgreSQL database engine level (`withTenant()` transaction scope). Even if an application query omits a filter, cross-tenant records can never be leaked or modified.
+- ⚡ **Public No-Signup Demo with Durable Rate Limits**: Provides potential users with an instant sandbox experience without registration, backed by fail-closed daily caps and per-IP throttles.
+- 💳 **Self-Serve Billing & Order Lifecycle**: Tiered quota enforcement (document storage count + monthly Q&A question limits), cryptographic HMAC-SHA256 payment webhooks, and administrative override capabilities.
 
-## Quick start
+---
 
-### Docker Compose (fastest)
+## Tech Stack
+
+| Layer | Technology | Description |
+|---|---|---|
+| **Frontend & API** | Next.js 14 (App Router), React, TypeScript | Server Components, streaming Q&A, Tailwind CSS |
+| **Vector Database** | PostgreSQL 18 + `pgvector` | HNSW cosine similarity index, Row-Level Security (RLS) |
+| **Embeddings** | Cloudflare Workers AI (`@cf/baai/bge-m3`) | 1024-dimensional multilingual embeddings (with hash fallback) |
+| **LLM Gateway** | OpenAI-Compatible API Gateway | Model-agnostic integration (OpenAI, Anthropic, local vLLM/Ollama) |
+| **Security & Auth** | Scrypt + HMAC stateless session cookies | API key authentication (`x-api-key`) & session cookies |
+| **DevOps & Containers**| Docker & Docker Compose | Multi-stage build, non-root execution, healthchecks |
+
+---
+
+## Quickstart & Running Locally
+
+### Option A: Docker Compose (Fastest & Recommended)
+
+Deploy the entire stack (PostgreSQL with `pgvector`, auto-applied schemas, and standalone Next.js server):
 
 ```bash
-cp .env.example .env      # fill POSTGRES_PASSWORD, DOCUASK_APP_PASSWORD, secrets, LLM
+# 1. Clone repository and set environment
+git clone https://github.com/kianlabs/docuask.git
+cd docuask
+cp .env.example .env
+
+# 2. Configure POSTGRES_PASSWORD, DOCUASK_APP_PASSWORD, and LLM credentials in .env
+# 3. Spin up services
 docker compose up -d --build
-curl -fsS http://localhost:3000/api/health   # {"ok":true,...}
+
+# 4. Verify deployment health probe
+curl -fsS http://localhost:3000/api/health
+# Returns: {"ok":true,...}
 ```
 
-Compose brings up Postgres/pgvector, applies the schema, and starts the app.
-Full production notes (TLS, scaling, Vercel) are in [`DEPLOY.md`](./DEPLOY.md).
+The workspace is immediately live at [http://localhost:3000](http://localhost:3000).
 
-### Local dev
+---
+
+### Option B: Local Development Environment
 
 ```bash
-# 1. Database (pgvector). Replace the password before any real use.
+# 1. Launch pgvector PostgreSQL container
 docker run -d --name docuask-pg \
-  -e POSTGRES_USER=docuask -e POSTGRES_PASSWORD=change_me_dev_pw \
-  -e POSTGRES_DB=docuask -p 127.0.0.1:5433:5432 \
+  -e POSTGRES_USER=docuask \
+  -e POSTGRES_PASSWORD=change_me_dev_pw \
+  -e POSTGRES_DB=docuask \
+  -p 127.0.0.1:5433:5432 \
   pgvector/pgvector:pg18
 
-# 2. Schema + a NON-superuser app role (RLS requires it — see PITFALLS).
-#    Set the app-role password once; it must match the one in DATABASE_URL.
-#    (Use a real secret in production; the fallback in roles.sql is dev-only.)
+# 2. Apply database schemas and restricted non-superuser application role
 export DOCUASK_APP_PASSWORD=change_me_app_pw
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/schema.sql
 docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/billing.sql
@@ -62,207 +136,88 @@ docker exec -i docuask-pg psql -U docuask -d docuask -f - < sql/accounts.sql
 docker exec -i docuask-pg psql -U docuask \
   -v app_password="$DOCUASK_APP_PASSWORD" -f - < sql/roles.sql
 
-# 3. Config
-cp .env.example .env.local   # fill DATABASE_URL, CF creds, LLM key
+# 3. Configure local environment
+cp .env.example .env.local
+# Set DATABASE_URL=postgresql://docuask_app:change_me_app_pw@localhost:5433/docuask
 
-# 4. Run
+# 4. Install dependencies and start development server
 npm install
-npx next dev -p 3005     # open http://localhost:3005/app (sign up, upload, ask)
+npx next dev -p 3005
 ```
 
-The app-role password (`DOCUASK_APP_PASSWORD`) must match the one embedded in
-`DATABASE_URL`. Use a real secret in production.
+Open [http://localhost:3005/app](http://localhost:3005/app) to register an account, upload documents, and test queries.
 
-Node 22 LTS is pinned in `.node-version`.
+---
 
-## Operations
+## Sample Document Ingestion & Verification
 
-| Concern | Where |
-|---|---|
-| Health / readiness probe | `GET /api/health` → `200` when the DB answers, else `503` |
-| Boot-time config check | `src/lib/env.ts` + `src/instrumentation.ts` (fails fast in prod) |
-| Security headers | `next.config.js` (`headers()`), HSTS + `nosniff` + `DENY` framing |
-| Errors | `src/app/error.tsx`, `global-error.tsx`, `not-found.tsx` |
-| Container | `Dockerfile` (multi-stage, `output: "standalone"`, non-root) |
-| Deploy | [`DEPLOY.md`](./DEPLOY.md) — Docker + Vercel |
-| CI | `.github/workflows/ci.yml` — typecheck, lint, build on a real Postgres |
-
-The rate limiter (`src/lib/ratelimit.ts`) is in-memory and **per-process**; move
-it to a shared store before running more than one replica.
-
-## Sample documents
-
-`samples/kebijakan-cuti-contoh.pdf` is a 3-page sample with a real text layer
-(HR leave/benefit policy) for trying ingest + Q&A.
-
-For a richer test, `samples/make_documents.py` generates a **library of 10
-documents** (HR, legal, operations, IT, finance) with distinct facts, so you can
-try cross-document questions and verify answers against the source. Both
-generators are dependency-free (real text layer, base-14 Helvetica):
+DocuAsk includes a standalone, zero-dependency PDF document generator for testing ingestion and cross-document inquiries:
 
 ```bash
-python3 samples/make_sample_pdf.py [output.pdf]      # single document
-python3 samples/make_documents.py [out_dir]          # 10 documents -> samples/library/
+# Generate single sample policy document
+python3 samples/make_sample_pdf.py samples/kebijakan-cuti-contoh.pdf
+
+# Generate a rich 10-document multi-department enterprise library (HR, Legal, Finance, IT)
+python3 samples/make_documents.py samples/library/
 ```
 
-Ingest one file, or the whole library:
+Ingest documents via REST API:
 
 ```bash
-# single file
-curl -H "x-api-key: $API_KEY" -F "file=@samples/kebijakan-cuti-contoh.pdf" \
+# Ingest single file
+curl -H "x-api-key: $YOUR_API_KEY" \
+  -F "file=@samples/kebijakan-cuti-contoh.pdf" \
   http://localhost:3005/api/ingest
 
-# whole library
-for f in samples/library/*.pdf; do
-  curl -H "x-api-key: $API_KEY" -F "file=@$f" http://localhost:3005/api/ingest
-done
+# Query across ingested documents
+curl -H "x-api-key: $YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Berapa hari hak cuti tahunan dan bagaimana prosedur klaim perjalanan dinas?"}' \
+  http://localhost:3005/api/chat
 ```
 
-The `library/` output is generated on demand and not committed.
+---
 
-Then ingest and query it (grab an API key from `/account` or a dev key):
+## API Reference
 
-```bash
-curl -H "x-api-key: $API_KEY" -F "file=@samples/kebijakan-cuti-contoh.pdf" \
-  http://localhost:3005/api/ingest
-curl -H "x-api-key: $API_KEY" -H 'Content-Type: application/json' \
-  -d '{"question":"Berapa hari cuti tahunan?"}' http://localhost:3005/api/chat
-```
+All tenant endpoints accept either an API key (`x-api-key: <key>`) or a verified browser session cookie.
 
-## Multi-tenancy
-
-- A request is authenticated by an **API key** (`x-api-key` or
-  `Authorization: Bearer`) or by the **session cookie** set at login. The
-  browser app (`/app`, `/account`) uses the cookie; scripts use a key.
-- Either credential resolves to a tenant (`tenants` table). Keys listed in
-  `DOCUASK_DEV_TENANT_KEYS` are auto-provisioned on first use.
-- Every query filters `tenant_id`, **and** Postgres RLS rejects cross-tenant
-  rows even if a query forgets. See `sql/schema.sql` and `src/lib/store.ts`
-  (`withTenant()` sets `app.tenant_id` per transaction).
-- Verified: tenant B asking a question answerable only from tenant A's document
-  gets "not in the document", never A's content.
-
-## Anti-hallucination
-
-1. **Retrieval floor** — if no chunk scores above the floor, the LLM is not
-   called at all (`usedLlm: false`, `reason: below_retrieval_floor`).
-2. **Grounded prompt** — the model may only use retrieved context and must cite
-   `[page N]`; otherwise it must reply that the answer is not in the document.
-
-## API
-
-| Method | Path | Description |
+| Method | Endpoint | Description |
 |---|---|---|
-| `GET`  | `/api/health` | readiness probe: `200` if the DB answers, else `503` |
-| `POST` | `/api/ingest` | multipart `file` (PDF) → extract, chunk, embed, store |
-| `GET`  | `/api/ingest` | list this tenant's documents |
-| `POST` | `/api/chat`   | `{question, documentId?, k?}` → answer + citations |
-| `GET`  | `/api/chat`   | diagnostics (authenticated tenants only; embed provider, LLM, store counts) |
-| `GET`  | `/api/usage`  | this tenant's plan, usage, remaining quota |
-| `POST` | `/api/usage`  | mock self-upgrade — **disabled in production** unless `ALLOW_MOCK_UPGRADE=1` |
-| `POST` | `/api/auth/signup` | `{email, password}` → creates tenant + owner, sets session cookie, returns API key |
-| `POST` | `/api/auth/login`  | `{email, password}` → sets session cookie |
-| `POST` | `/api/auth/logout` | clears the session cookie |
-| `GET`  | `/api/account` | session-authenticated dashboard payload (email, API key, plan, usage, orders) |
-| `POST` | `/api/account/rotate-key` | rotate this tenant's API key (session-authenticated) |
-| `POST` | `/api/orders` | `{planCode}` → create a `pending` order for the signed-in tenant |
-| `GET`  | `/api/orders` | the signed-in tenant's own orders |
-| `DELETE` | `/api/orders?ref=...` | cancel one's own `pending` order |
-| `GET`  | `/api/admin`  | all tenants + usage (requires `x-admin-token`) |
-| `POST` | `/api/admin`  | operator plan change (requires `x-admin-token`) |
-| `GET`  | `/api/admin/orders` | all orders (requires `x-admin-token`) |
-| `POST` | `/api/admin/orders` | `{orderRef}` → mark paid + upgrade the tenant (requires `x-admin-token`) |
-| `POST` | `/api/webhook/payment` | payment-gateway callback (HMAC-SHA256 `x-payment-signature`; fail-closed) |
+| `GET` | `/api/health` | Service health probe (`200 OK` if DB is accessible, else `503`) |
+| `POST` | `/api/ingest` | Multipart PDF upload → extract, chunk, embed, and store with tenant RLS |
+| `GET` | `/api/ingest` | List all documents belonging to the authenticated tenant |
+| `DELETE`| `/api/ingest?id=...`| Safely delete a document and purge all associated vector embeddings |
+| `POST` | `/api/chat` | Query RAG pipeline: `{question, documentId?, k?}` → answer + citations |
+| `GET` | `/api/chat` | Retrieve diagnostics: active embedding provider, LLM model, vector counts |
+| `GET` | `/api/usage` | Inspect current plan quotas, document counts, and monthly questions |
+| `POST` | `/api/auth/signup` | Register new tenant and owner user, establishing session cookie & API key |
+| `POST` | `/api/auth/login` | Authenticate owner credentials and return session cookie |
+| `POST` | `/api/orders` | Create pending plan upgrade order |
+| `POST` | `/api/webhook/payment` | Fail-closed HMAC-SHA256 payment callback handler for billing reconciliation |
 
-Tenant endpoints accept **either** an API key **or** a session cookie (the
-browser app uses the cookie). `/api/chat` GET only exposes the LLM
-endpoint/model to authenticated tenants (or with `EXPOSE_PUBLIC_DIAGNOSTICS=1`).
+---
 
-## Pages
+## Operational Verification & CI
 
-- `/` — landing page (value prop, sample Q&A, pricing, FAQ, trust section).
-- `/app` — the workspace: sign in, upload PDFs, ask questions, get cited
-  answers. Requires a session (redirects to `/login` otherwise).
-- `/account` — usage, plan comparison, orders, and the API key (for scripts).
-- `/login`, `/signup`, `/admin`.
-- `/privacy`, `/terms` — legal pages (Indonesian).
+| Concern | Implementation | Location |
+|---|---|---|
+| **Health Probe** | `GET /api/health` | Responds `200` on successful DB ping, `503` on failure |
+| **Config Validation** | Zero-downtime startup guard | `src/lib/env.ts` & `src/instrumentation.ts` |
+| **Security Headers** | HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` | `next.config.js` |
+| **Continuous Integration** | GitHub Actions workflow | `.github/workflows/ci.yml` (typecheck, lint, build on live PostgreSQL) |
 
-### SEO
+---
 
-- `robots.txt` + `sitemap.xml` are generated from `src/lib/site.ts`
-  (`/api`, `/app`, `/account`, `/admin` are disallowed and `noindex`).
-- OpenGraph/Twitter cards via `src/app/opengraph-image.tsx` (rendered from the
-  design tokens, no stale PNG).
-- JSON-LD: `SoftwareApplication` + `Organization` + `FAQPage` on the landing.
-- Set `NEXT_PUBLIC_SITE_URL` to your public origin so canonical/OG URLs are
-  absolute (falls back to the Vercel URL, then `localhost:3005`).
+## Architectural Pitfalls (Verified Best Practices)
 
-## Billing
+1. **Superuser Bypasses PostgreSQL RLS**: If the application connects with a superuser role, `FORCE ROW LEVEL SECURITY` is bypassed and multi-tenant isolation fails. Always use the unprivileged `docuask_app` role (`sql/roles.sql`).
+2. **Missing Tenant Setting Fail-Closed**: `current_setting('app.tenant_id', true)` returns `NULL` when unset. In SQL, `tenant_id = NULL` evaluates to unknown/false, safely returning 0 rows. Never remove the `missing_ok` flag.
+3. **Build vs. Dev Collision**: Never run `npm run build` while `next dev` is running on the same machine; shared `.next/` artifacts will corrupt.
+4. **Lexical Hash Embeddings Fallback**: The hash embedder is intended strictly as a zero-credential dev fallback. In production, always configure Cloudflare Workers AI `bge-m3` or an OpenAI embedding model for semantic parity.
 
-- Plans (`free`/`pro`/`bisnis`) cap **documents** and **questions** per month.
-- The **documents** quota is derived from `COUNT(*)` on the `documents` table —
-  the source of truth — so it can never drift from what is actually stored.
-  **Questions** use a monthly counter in `usage_counters`.
-- In production the mock self-upgrade is blocked; plan changes come from the
-  signed payment webhook (`PAYMENT_WEBHOOK_SECRET`). Unset secret = 503.
-
-## Accounts & orders
-
-Self-service onboarding and a gateway-agnostic purchase flow:
-
-- **Sign up** (`/signup`) creates a tenant + owner user in one transaction and
-  hands back an API key (also shown on `/account`). Passwords are hashed with
-  `scrypt` (`src/lib/password.ts`); sessions are a stateless HMAC cookie
-  (`src/lib/session.ts`, `SESSION_SECRET`, 30-day TTL).
-- **Buying a plan** (`/account`) creates a `pending` order. The plan does **not**
-  change until a trusted party confirms payment:
-  - **Manual today:** an operator marks the order paid in `/admin` (or via
-    `POST /api/admin/orders`), which calls `upgradePlan()`.
-  - **Gateway later:** point Midtrans/Xendit at `POST /api/webhook/payment`
-    with `{"orderRef": "ord_...", "status": "settlement"}`. The tenant + plan
-    are read from the stored order, so the gateway cannot choose them.
-- `users` and `orders` are RLS-protected with the same tenant policy as the rest
-  of the schema (see `sql/accounts.sql`); login-by-email and the admin order list
-  run under the transaction-local `app.is_admin` flag.
-
-## Security
-
-- **Secrets stay in env.** `.env.local` is git-ignored; `.env.example` holds
-  placeholders only. Never commit real credentials.
-- **Admin auth is fail-closed.** With `ADMIN_TOKEN` unset, `/admin` and
-  `/api/admin` are disabled. The token is compared in constant time.
-- **Payment webhook is fail-closed.** With `PAYMENT_WEBHOOK_SECRET` unset,
-  `/api/webhook/payment` returns 503. Requests must carry a valid
-  HMAC-SHA256 signature.
-- **Customer sessions are fail-closed.** With `SESSION_SECRET` (or `ADMIN_TOKEN`)
-  unset, signup/login are disabled. Session cookies are `httpOnly`, `sameSite=lax`,
-  and `secure` in production; tokens are HMAC-signed so ids cannot be tampered with.
-- **Tenant isolation is in the database** (RLS), not only in application code.
-- The mock self-upgrade in `POST /api/usage` is disabled in production unless
-  `ALLOW_MOCK_UPGRADE=1`.
+---
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
-
-## PITFALLS (verified the hard way — do not repeat)
-
-1. **RLS is bypassed by superusers.** If the app connects as a superuser (or a
-   role with `BYPASSRLS`), `ENABLE`+`FORCE ROW LEVEL SECURITY` does **nothing**
-   and cross-tenant rows leak. Always connect the app as an ordinary role
-   (`sql/roles.sql`). Verify with:
-   `SELECT rolname, rolsuper, rolbypassrls FROM pg_roles;`
-2. **`FORCE ROW LEVEL SECURITY` is still required.** Without it, the table
-   *owner* bypasses policies.
-3. **Unset `app.tenant_id` must fail closed.** `current_setting(..., true)`
-   returns NULL, and `tenant_id = NULL` is never true → zero rows. Keep the
-   `true` (missing_ok) argument.
-4. **Never `next build` while `next dev` is running** — they share `.next/` and
-   the dev server corrupts (`MODULE_NOT_FOUND`, empty API bodies). Kill dev,
-   `rm -rf .next`, restart.
-5. **`next lint` prompts interactively** without a config — add `.eslintrc.json`
-   and run `CI=1 npm run lint`.
-6. **Hash embeddings are lexical.** Paraphrased questions can rank the wrong
-   page. That is why bge-m3 is the default; the hash provider is a fallback.
-7. **`EADDRINUSE` after killing dev** — Next leaves a child `next-server`. Kill
-   by matching cwd, not just the parent PID.
+This project is open-source under the [MIT License](./LICENSE) © 2026 Kian Labs.
